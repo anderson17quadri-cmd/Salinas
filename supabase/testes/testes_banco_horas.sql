@@ -674,6 +674,69 @@ $$;
 
 -- ---------------------------------------------------------------------
 \echo ''
+\echo '== Regime de folgas rotativo (escala 6x2) =='
+do $$
+declare
+  v_mes date;
+  v_emp uuid := 'aaaaaaaa-0000-0000-0000-000000000001';
+  v_ana uuid := 'ffffffff-0000-0000-0000-00000000000a';
+  v_h record;
+  v_dia_folga date;
+  v_dias_uteis int;
+begin
+  -- A Pastelaria Salinas não tem um dia de folga fixo: trabalha-se 6 dias
+  -- e folgam-se 2, e a folga muda de semana para semana. Este bloco liga
+  -- o regime 'rotativo' só para este teste e repõe 'fixo' no fim, para
+  -- não interferir com os testes anteriores nem com os seguintes.
+  update empresas set regime_folgas = 'rotativo' where id = v_emp;
+
+  v_mes := teste_preparar_mes(); -- Ana: só bate ponto no dia A e no dia B (ver acima)
+
+  select count(*) into v_dias_uteis
+  from generate_series(v_mes, (v_mes + interval '1 month')::date - 1, interval '1 day') d
+  where extract(dow from d) between 1 and 5;
+
+  select * into v_h
+  from _horas_do_periodo(v_emp, v_mes, (v_mes + interval '1 month')::date, 'Europe/Lisbon')
+  where funcionario_id = v_ana;
+
+  -- Dos dias úteis com horário, só 2 têm ponto (dia A e dia B). Os
+  -- restantes, em regime rotativo, são folga — não falta.
+  perform teste_ok('dias sem ponto em regime rotativo não são falta',
+    v_h.dias_sem_registo_nem_justificacao = 0);
+  perform teste_ok('esses dias aparecem como folga',
+    v_h.dias_folga = v_dias_uteis - 2);
+  -- As horas esperadas vêm do horário do dia, não do que foi de facto
+  -- trabalhado: os dias A e B têm ambos turno de 8h marcado (09:00–17:00),
+  -- mesmo que no dia B a Ana só tenha feito 4h.
+  perform teste_ok('as horas esperadas contam o turno dos dias com ponto',
+    v_h.horas_esperadas = 8 + 8);
+  perform teste_ok('as horas trabalhadas não mudam com o regime',
+    v_h.horas_trabalhadas = 12);
+
+  -- Uma justificação (ex.: doença) num dia útil sem ponto continua a
+  -- contar como dia de trabalho previsto, não como folga — a
+  -- justificação prova que a pessoa estava de escala nesse dia.
+  select (v_mes + ((1 - extract(dow from v_mes)::int + 7) % 7) + 14)::date into v_dia_folga;
+  insert into faltas_justificacoes (funcionario_id, data, motivo, status)
+  values (v_ana, v_dia_folga, 'doenca', 'aprovado');
+
+  select * into v_h
+  from _horas_do_periodo(v_emp, v_mes, (v_mes + interval '1 month')::date, 'Europe/Lisbon')
+  where funcionario_id = v_ana;
+
+  perform teste_ok('um dia justificado deixa de ser contado como folga',
+    v_h.dias_folga = v_dias_uteis - 3);
+  perform teste_ok('e passa a somar às horas esperadas',
+    v_h.horas_esperadas = 8 + 8 + 8);
+
+  delete from faltas_justificacoes where funcionario_id = v_ana and data = v_dia_folga;
+  update empresas set regime_folgas = 'fixo' where id = v_emp;
+end;
+$$;
+
+-- ---------------------------------------------------------------------
+\echo ''
 \echo '======================================================='
 \echo ' Banco de horas: todos os testes passaram.'
 \echo '======================================================='

@@ -85,12 +85,12 @@ grant select (
   id, nome, morada, latitude, longitude, raio_metros,
   metodo_qrcode_ativo, metodo_gps_ativo, foto_obrigatoria,
   timezone, qr_token_atualizado_em, created_at,
-  politica_banco_horas, limite_compensacao_meses
+  politica_banco_horas, limite_compensacao_meses, regime_folgas
 ) on empresas to authenticated;
 grant update (
   nome, morada, latitude, longitude, raio_metros,
   metodo_qrcode_ativo, metodo_gps_ativo, foto_obrigatoria, timezone,
-  politica_banco_horas, limite_compensacao_meses
+  politica_banco_horas, limite_compensacao_meses, regime_folgas
 ) on empresas to authenticated;
 
 -- =====================================================================

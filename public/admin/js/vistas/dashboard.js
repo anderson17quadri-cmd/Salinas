@@ -5,12 +5,21 @@ export default async function renderDashboard(container, ctx) {
   const dados = await dashboardHoje();
   const tz = dados.timezone || ctx.timezone;
 
+  // Em regime rotativo só se sabe se um dia sem ponto era folga ou falta
+  // no fim do próprio dia — enquanto está a decorrer, pode ser só que a
+  // pessoa ainda não chegou, ou que calhou ser o dia de folga dela.
+  const rotativo = dados.regime_folgas === 'rotativo';
+
   const metricas = [
     { valor: dados.dentro, rotulo: 'Ao serviço agora', cor: 'var(--sucesso)' },
     { valor: dados.em_pausa, rotulo: 'Em pausa', cor: 'var(--aviso)' },
     { valor: dados.fora, rotulo: 'Fora de serviço', cor: 'var(--neutro)' },
     { valor: dados.atrasos, rotulo: 'Atrasos hoje', cor: dados.atrasos > 0 ? 'var(--erro)' : 'var(--texto)' },
-    { valor: dados.ausentes_com_horario, rotulo: 'Sem entrada hoje', cor: 'var(--texto)' },
+    {
+      valor: dados.ausentes_com_horario,
+      rotulo: rotativo ? 'Sem entrada hoje (pode ser folga)' : 'Sem entrada hoje',
+      cor: 'var(--texto)',
+    },
     { valor: dados.registos_fora_do_raio, rotulo: 'Registos fora do raio', cor: dados.registos_fora_do_raio > 0 ? 'var(--aviso)' : 'var(--texto)' },
     { valor: dados.justificacoes_pendentes, rotulo: 'Justificações pendentes', cor: dados.justificacoes_pendentes > 0 ? 'var(--aviso)' : 'var(--texto)' },
   ];

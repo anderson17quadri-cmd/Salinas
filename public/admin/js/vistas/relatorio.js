@@ -66,7 +66,7 @@ export default async function renderRelatorio(container, ctx) {
 
     descarregarCsv(
       `salinas-relatorio-${dados.ano}-${String(dados.mes).padStart(2, '0')}.csv`,
-      ['Funcionário', 'Email', 'Cargo', 'Horas trabalhadas', 'Horas esperadas', 'Saldo do mês', 'Banco de horas acumulado', 'Dias com entrada', 'Faltas sem justificação', 'Faltas justificadas', 'Faltas pendentes'],
+      ['Funcionário', 'Email', 'Cargo', 'Horas trabalhadas', 'Horas esperadas', 'Saldo do mês', 'Banco de horas acumulado', 'Dias com entrada', 'Dias de folga', 'Faltas sem justificação', 'Faltas justificadas', 'Faltas pendentes'],
       dados.linhas.map((l) => [
         l.nome,
         l.email,
@@ -76,6 +76,7 @@ export default async function renderRelatorio(container, ctx) {
         formatarNumero(l.saldo_horas),
         formatarNumero(l.saldo_banco_horas),
         l.dias_com_entrada,
+        l.dias_folga ?? 0,
         l.dias_sem_registo_nem_justificacao,
         l.faltas_justificadas,
         l.faltas_pendentes,
@@ -90,6 +91,8 @@ export default async function renderRelatorio(container, ctx) {
 
 function corpo(dados, ctx) {
   const saldoTotal = Number(dados.total_horas_trabalhadas) - Number(dados.total_horas_esperadas);
+
+  const rotativo = dados.regime_folgas === 'rotativo';
 
   return `
     <h2>${MESES[dados.mes - 1]} de ${dados.ano} — ${esc(ctx.empresa.nome)}</h2>
@@ -127,6 +130,7 @@ function corpo(dados, ctx) {
             <th class="numero">Esperado</th>
             <th class="numero">Saldo</th>
             <th class="numero">Dias</th>
+            ${rotativo ? '<th class="numero">Folgas</th>' : ''}
             <th class="numero">Faltas s/ just.</th>
             <th class="numero">Banco de horas</th>
           </tr>
@@ -142,6 +146,7 @@ function corpo(dados, ctx) {
                 ${duracao(l.saldo_horas)}
               </td>
               <td class="numero">${l.dias_com_entrada}</td>
+              ${rotativo ? `<td class="numero">${l.dias_folga || '—'}</td>` : ''}
               <td class="numero" style="${l.dias_sem_registo_nem_justificacao > 0 ? 'color:var(--erro);font-weight:700' : ''}">
                 ${l.dias_sem_registo_nem_justificacao || '—'}${l.faltas_pendentes > 0 ? ` <span class="etiqueta etiqueta-pausa">${l.faltas_pendentes} pend.</span>` : ''}
               </td>
@@ -149,7 +154,7 @@ function corpo(dados, ctx) {
                 ${duracao(l.saldo_banco_horas)}
               </td>
             </tr>
-          `).join('') || '<tr><td colspan="7" class="vazio">Sem funcionários.</td></tr>'}
+          `).join('') || `<tr><td colspan="${rotativo ? 8 : 7}" class="vazio">Sem funcionários.</td></tr>`}
         </tbody>
       </table>
     </div>
@@ -163,6 +168,12 @@ function corpo(dados, ctx) {
       <strong>banco de horas</strong> é o acumulado ainda em aberto, de todos os
       períodos. Um saldo negativo é dívida de horas, não é falta — as faltas são
       contadas à parte, quando não há registo nem justificação num dia com horário.
+      ${rotativo ? `
+      <br />
+      Regime de folgas <strong>rotativo</strong>: um dia sem registo e sem
+      justificação conta como <strong>folga</strong>, não como falta — a coluna
+      «Folgas» mostra quantos dias assim houve no mês.
+      ` : ''}
     </p>
   `;
 }

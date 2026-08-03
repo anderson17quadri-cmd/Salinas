@@ -32,11 +32,31 @@ create table if not exists empresas (
   -- Em Portugal o prazo de compensação vai tipicamente até 12 meses.
   limite_compensacao_meses integer not null default 12
     check (limite_compensacao_meses between 1 and 60),
+  -- Como se sabe que um dia foi folga (ver _horas_do_periodo em 03_functions.sql)
+  regime_folgas text not null default 'fixo'
+    check (regime_folgas in ('fixo','rotativo')),
   created_at timestamptz default now()
 );
 
+-- Colunas acrescentadas depois da primeira instalação. O ficheiro é para
+-- poder correr outra vez sobre uma base já criada, e o `create table if
+-- not exists` acima não acrescenta colunas novas a uma tabela existente.
+alter table empresas
+  add column if not exists regime_folgas text not null default 'fixo';
+do $$
+begin
+  alter table empresas add constraint empresas_regime_folgas_check
+    check (regime_folgas in ('fixo','rotativo'));
+exception when duplicate_object then null;
+end $$;
+
 comment on column empresas.qr_code_token is
   'Token secreto do QR code da empresa. Nunca exposto a funcionários (ver grants em 02_rls.sql).';
+
+comment on column empresas.regime_folgas is
+  'fixo = o horário semanal define as folgas (dia sem horário = folga). '
+  'rotativo = escala 6x2 ou parecida, em que as folgas mudam de semana para '
+  'semana: um dia sem qualquer registo e sem justificação é folga, não é falta.';
 
 -- ---------------------------------------------------------------------
 -- Funcionários

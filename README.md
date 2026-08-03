@@ -278,6 +278,19 @@ estimam-se a partir das horas semanais do contrato.
 O relatório e o banco de horas usam a **mesma** função (`_horas_do_periodo`),
 por isso não podem divergir.
 
+### Regime de folgas
+
+Definido em **Definições → Escala e folgas** (`empresas.regime_folgas`):
+
+- **Fixo** (omissão) — a folga é sempre o(s) mesmo(s) dia(s) da semana. Um dia
+  com horário definido e sem ponto conta como falta.
+- **Rotativo** — para escalas do tipo 6x2, em que a folga muda de semana para
+  semana e por isso não há como marcá-la no horário semanal. Um dia com
+  horário e sem ponto **nem justificação** passa a contar como **folga**, não
+  como falta; uma justificação nesse dia prova que, afinal, era dia de
+  trabalho, e volta a somar às horas esperadas. `dias_folga` aparece à parte
+  no relatório mensal.
+
 ---
 
 ## Banco de horas

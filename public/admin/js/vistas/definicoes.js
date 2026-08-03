@@ -48,6 +48,27 @@ export default async function renderDefinicoes(container, ctx) {
           </select>
         </label>
 
+        <h3 style="margin-top:8px">Escala e folgas</h3>
+
+        <label>Regime de folgas
+          <select name="regime_folgas">
+            <option value="fixo" ${e.regime_folgas !== 'rotativo' ? 'selected' : ''}>
+              Fixo — a folga é sempre o(s) mesmo(s) dia(s) da semana
+            </option>
+            <option value="rotativo" ${e.regime_folgas === 'rotativo' ? 'selected' : ''}>
+              Rotativo — escala com dias de folga que vão mudando (ex.: 6 dias de trabalho, 2 de folga)
+            </option>
+          </select>
+        </label>
+
+        <p class="nota">
+          Em regime <strong>fixo</strong>, um dia com horário definido e sem
+          ponto conta como falta. Em regime <strong>rotativo</strong>, o
+          horário fica igual todas as semanas mas a folga muda — por isso um
+          dia sem ponto e sem justificação passa a contar como
+          <strong>folga</strong>, não como falta.
+        </p>
+
         <h3 style="margin-top:8px">Banco de horas</h3>
 
         <label>Política
@@ -151,6 +172,7 @@ export default async function renderDefinicoes(container, ctx) {
       longitude,
       raio_metros: Number(form.raio_metros.value) || 100,
       timezone: form.timezone.value,
+      regime_folgas: form.regime_folgas.value,
       politica_banco_horas: form.politica_banco_horas.value,
       limite_compensacao_meses: Number(form.limite_compensacao_meses.value) || 12,
       metodo_qrcode_ativo: qr,

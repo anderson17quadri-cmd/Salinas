@@ -87,7 +87,7 @@ export async function contextoAdmin() {
 
   const { data: empresa, error: erroEmpresa } = await supabase()
     .from('empresas')
-    .select('id, nome, morada, latitude, longitude, raio_metros, metodo_qrcode_ativo, metodo_gps_ativo, foto_obrigatoria, timezone, qr_token_atualizado_em, politica_banco_horas, limite_compensacao_meses')
+    .select('id, nome, morada, latitude, longitude, raio_metros, metodo_qrcode_ativo, metodo_gps_ativo, foto_obrigatoria, timezone, qr_token_atualizado_em, politica_banco_horas, limite_compensacao_meses, regime_folgas')
     .eq('id', admin.empresa_id)
     .single();
   if (erroEmpresa) throw erroEmpresa;

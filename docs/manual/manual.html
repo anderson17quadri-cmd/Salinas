@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<title>Salinas — Manual de utilização</title>
+<style>
+/* =====================================================================
+   Manual de utilização do Salinas.
+   Feito para impressão em A4: este ficheiro é a fonte, o PDF ao lado é
+   gerado a partir dele (ver docs/manual/README.md). Editar aqui, não
+   no PDF.
+   ===================================================================== */
+
+@page { size: A4; margin: 18mm 16mm 20mm; }
+
+:root {
+  --laranja: #F5A323;
+  --laranja-escuro: #B87A0B;
+  --laranja-suave: #FDF0DA;
+  --tinta: #12100C;
+  --texto: #1E1A14;
+  --texto-suave: #6B6357;
+  --borda: #E6DCCB;
+  --sucesso: #1E8E5A;
+  --erro: #C0392B;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--texto);
+  font-size: 10.5pt;
+  line-height: 1.55;
+  background: #fff;
+}
+
+h1, h2, h3 { line-height: 1.2; margin: 0; }
+
+/* ------------------------------- Capa ------------------------------- */
+
+.capa {
+  height: 247mm;              /* altura útil de uma A4 com as margens acima */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  page-break-after: always;
+}
+.capa img { width: 96mm; }
+.capa .titulo {
+  font-size: 30pt;
+  font-weight: 700;
+  margin-top: 14mm;
+  letter-spacing: -0.5pt;
+}
+.capa .sub { font-size: 13pt; color: var(--texto-suave); margin-top: 4mm; }
+.capa .risca { width: 30mm; height: 3pt; background: var(--laranja); border-radius: 2pt; margin: 10mm 0; }
+.capa .pe { font-size: 9.5pt; color: var(--texto-suave); }
+.capa .pe strong { color: var(--texto); }
+
+/* ------------------------------ Índice ------------------------------ */
+
+.indice { page-break-after: always; }
+.indice ol { margin: 6mm 0 0; padding-left: 6mm; }
+.indice > ol > li { font-weight: 600; margin-top: 4mm; }
+.indice ol ol { margin: 1mm 0 0; padding-left: 5mm; }
+.indice ol ol li { font-weight: 400; color: var(--texto-suave); margin-top: 0.5mm; }
+
+/* ------------------------------ Secções ----------------------------- */
+
+.parte {
+  page-break-before: always;
+  background: var(--tinta);
+  color: #fff;
+  padding: 7mm 8mm;
+  border-radius: 4mm;
+  margin-bottom: 8mm;
+}
+.parte .etiqueta {
+  font-size: 8.5pt;
+  letter-spacing: 1.4pt;
+  text-transform: uppercase;
+  color: var(--laranja);
+  font-weight: 700;
+}
+.parte h2 { font-size: 20pt; margin-top: 2mm; }
+.parte p { margin: 3mm 0 0; color: #CFC7B8; font-size: 10pt; }
+
+h2.passo {
+  font-size: 14pt;
+  margin-top: 9mm;
+  padding-bottom: 2mm;
+  border-bottom: 1.5pt solid var(--laranja);
+  page-break-after: avoid;
+}
+h3 {
+  font-size: 11.5pt;
+  margin-top: 6mm;
+  color: var(--laranja-escuro);
+  page-break-after: avoid;
+}
+p { margin: 3mm 0; }
+ul, ol { margin: 3mm 0; padding-left: 6mm; }
+li { margin: 1.5mm 0; }
+strong { font-weight: 600; }
+code {
+  font-family: "Consolas", "SF Mono", monospace;
+  background: var(--laranja-suave);
+  padding: 0.5mm 1.5mm;
+  border-radius: 1.5mm;
+  font-size: 9.5pt;
+}
+a { color: var(--laranja-escuro); text-decoration: none; word-break: break-all; }
+
+/* ------------------------------ Figuras ----------------------------- */
+
+figure { margin: 5mm 0; page-break-inside: avoid; text-align: center; }
+figure img {
+  max-width: 100%;
+  border: 1pt solid var(--borda);
+  border-radius: 3mm;
+}
+figure.telemovel img { width: 62mm; }
+figure.telemovel.duo img { width: 55mm; }
+figure.telemovel.duo { display: flex; gap: 5mm; justify-content: center; align-items: flex-start; }
+figcaption {
+  font-size: 8.5pt;
+  color: var(--texto-suave);
+  margin-top: 2mm;
+  font-style: italic;
+}
+figure.telemovel.duo figcaption { flex-basis: 100%; }
+
+/* ------------------------------- Caixas ----------------------------- */
+
+.caixa {
+  border: 1pt solid var(--borda);
+  border-left: 3pt solid var(--laranja);
+  background: #FFFCF6;
+  border-radius: 0 3mm 3mm 0;
+  padding: 4mm 5mm;
+  margin: 5mm 0;
+  page-break-inside: avoid;
+}
+.caixa .rotulo {
+  font-size: 8.5pt;
+  text-transform: uppercase;
+  letter-spacing: 1pt;
+  font-weight: 700;
+  color: var(--laranja-escuro);
+}
+.caixa.atencao { border-left-color: var(--erro); }
+.caixa.atencao .rotulo { color: var(--erro); }
+.caixa p:last-child { margin-bottom: 0; }
+.caixa p:first-of-type { margin-top: 2mm; }
+
+/* ------------------------------ Tabelas ----------------------------- */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 4mm 0;
+  font-size: 9.5pt;
+  page-break-inside: avoid;
+}
+th {
+  text-align: left;
+  background: var(--tinta);
+  color: #fff;
+  padding: 2.5mm 3mm;
+  font-size: 8.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.8pt;
+}
+td { padding: 2.5mm 3mm; border-bottom: 0.5pt solid var(--borda); vertical-align: top; }
+tr:nth-child(even) td { background: #FDFAF4; }
+
+/* --------------------------- Cartões turno -------------------------- */
+
+.turnos { display: flex; gap: 4mm; margin: 5mm 0; page-break-inside: avoid; }
+.turnos div {
+  flex: 1;
+  border: 1pt solid var(--borda);
+  border-radius: 3mm;
+  padding: 4mm;
+  text-align: center;
+}
+.turnos .nome { font-weight: 700; font-size: 12pt; }
+.turnos .horas { color: var(--laranja-escuro); font-weight: 600; margin-top: 1mm; }
+.turnos .nota { font-size: 8.5pt; color: var(--texto-suave); margin-top: 2mm; }
+
+/* ------------------------------- Rodapé ----------------------------- */
+
+.fim {
+  margin-top: 10mm;
+  padding-top: 5mm;
+  border-top: 1pt solid var(--borda);
+  font-size: 9pt;
+  color: var(--texto-suave);
+  text-align: center;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================== Capa ============================== -->
+<section class="capa">
+  <img src="imagens/logo.png" alt="Pastelaria Salinas">
+  <div class="titulo">Salinas</div>
+  <div class="sub">Registo de ponto — manual de utilização</div>
+  <div class="risca"></div>
+  <div class="pe">
+    App do funcionário: <strong>anderson17quadri-cmd.github.io/Salinas/</strong><br>
+    Painel do gestor: <strong>anderson17quadri-cmd.github.io/Salinas/admin/</strong>
+  </div>
+</section>
+
+<!-- ============================= Índice ============================= -->
+<section class="indice">
+  <h1 style="font-size:19pt">Índice</h1>
+  <ol>
+    <li>Para o funcionário
+      <ol>
+        <li>Instalar a app no telemóvel</li>
+        <li>Entrar pela primeira vez</li>
+        <li>Bater ponto</li>
+        <li>A ordem dos registos</li>
+        <li>Histórico e banco de horas</li>
+        <li>Justificar uma falta</li>
+        <li>Perfil e palavra-passe</li>
+      </ol>
+    </li>
+    <li>Para o gestor
+      <ol>
+        <li>Entrar no painel</li>
+        <li>Dashboard: quem está ao serviço</li>
+        <li>Registar um funcionário</li>
+        <li>Criar o acesso e entregar a palavra-passe</li>
+        <li>Definir o horário — manhã, pão e noite</li>
+        <li>O QR code e o cartaz</li>
+        <li>Registos</li>
+        <li>Justificações</li>
+        <li>Banco de horas</li>
+        <li>Relatório mensal</li>
+        <li>Definições</li>
+      </ol>
+    </li>
+    <li>Perguntas frequentes</li>
+    <li>Tratar da segurança da conta</li>
+  </ol>
+</section>
+
+<!-- ======================= Parte 1 — funcionário ==================== -->
+<section class="parte">
+  <div class="etiqueta">Parte 1</div>
+  <h2>Para o funcionário</h2>
+  <p>Instalar a app, bater ponto e ver as suas horas. Cinco minutos a ler, uma vez só.</p>
+</section>
+
+<h2 class="passo">1.1 Instalar a app no telemóvel</h2>
+
+<p>O Salinas não está na Play Store nem na App Store — abre-se no browser e
+instala-se a partir dali. Fica com ícone no ecrã principal e abre como
+qualquer outra app.</p>
+
+<p>Comece por abrir no telemóvel:</p>
+<p style="text-align:center"><code>anderson17quadri-cmd.github.io/Salinas/</code></p>
+
+<h3>Android (Chrome)</h3>
+<ol>
+  <li>Toque nos <strong>três pontinhos</strong> no canto superior direito.</li>
+  <li>Escolha <strong>«Instalar aplicação»</strong> ou «Adicionar ao ecrã principal».</li>
+  <li>Confirme. O ícone laranja do Salinas aparece no ecrã.</li>
+</ol>
+
+<h3>iPhone (Safari)</h3>
+<ol>
+  <li>Tem de ser no <strong>Safari</strong> — no iPhone o Chrome não sabe instalar.</li>
+  <li>Toque no botão de <strong>partilha</strong> (o quadrado com a seta para cima), em baixo.</li>
+  <li>Deslize e escolha <strong>«Adicionar ao ecrã principal»</strong>.</li>
+  <li>Toque em <strong>Adicionar</strong>.</li>
+</ol>
+
+<div class="caixa">
+  <div class="rotulo">Porque é que isto interessa</div>
+  <p>Instalada, a app abre sem a barra do browser e a câmara para ler o QR
+  funciona melhor. Se preferir, também dá para usar sempre pelo browser —
+  só é menos prático.</p>
+</div>
+
+<h2 class="passo">1.2 Entrar pela primeira vez</h2>
+
+<p>O gestor cria a sua conta e entrega-lhe <strong>o email e uma
+palavra-passe</strong> parecida com <code>GZCV-2694-CT</code>. Escreva os dois
+no ecrã de entrada e toque em <strong>Entrar</strong>.</p>
+
+<figure class="telemovel duo">
+  <img src="imagens/app-login.png" alt="Ecrã de entrada">
+  <img src="imagens/app-primeira-entrada.png" alt="Ecrã inicial depois de entrar">
+  <figcaption>À esquerda o ecrã de entrada; à direita o que aparece assim que entra.</figcaption>
+</figure>
+
+<div class="caixa">
+  <div class="rotulo">Mude a palavra-passe</div>
+  <p>A que lhe deram é temporária e o gestor viu-a. Assim que entrar, vá a
+  <strong>Perfil → Mudar palavra-passe</strong> e escolha uma sua.</p>
+</div>
+
+<h2 class="passo">1.3 Bater ponto</h2>
+
+<p>É o botão grande cor de laranja no ecrã inicial. Por baixo do botão está
+sempre escrito <strong>o que vai ser registado</strong> — «Entrada», ou
+«Saída · Início de pausa», conforme o momento do dia.</p>
+
+<figure class="telemovel duo">
+  <img src="imagens/app-inicio.png" alt="Ecrã inicial com o botão Bater Ponto">
+  <img src="imagens/app-escolha.png" alt="Escolher o tipo de registo">
+  <figcaption>O botão diz sempre o que vai registar; se houver mais do que uma
+  hipótese, pergunta qual.</figcaption>
+</figure>
+
+<h3>Com QR code</h3>
+<ol>
+  <li>Toque em <strong>Bater Ponto</strong> (ou em «Ler QR code»).</li>
+  <li>Autorize a câmara na primeira vez.</li>
+  <li>Aponte ao cartaz que está afixado na pastelaria.</li>
+  <li>Pronto — aparece o ecrã verde a confirmar.</li>
+</ol>
+
+<h3>Com GPS</h3>
+<ol>
+  <li>Toque em <strong>Usar GPS</strong>.</li>
+  <li>Autorize a localização.</li>
+  <li>A app confirma que está dentro do raio da pastelaria e regista.</li>
+</ol>
+
+<div class="caixa">
+  <div class="rotulo">Se estiver fora do raio</div>
+  <p>O registo <strong>não é recusado</strong> — fica marcado como «fora do
+  raio» e a app pede-lhe uma justificação (por exemplo, «fui buscar
+  encomenda»). O gestor vê o motivo no painel.</p>
+</div>
+
+<h2 class="passo">1.4 A ordem dos registos</h2>
+
+<p>A app não deixa marcar duas entradas seguidas nem uma saída sem ter
+entrado. É de propósito: evita horas erradas ao fim do mês.</p>
+
+<table>
+  <tr><th>Último registo</th><th>O que pode marcar a seguir</th></tr>
+  <tr><td>Nada ainda hoje</td><td>Entrada</td></tr>
+  <tr><td>Entrada</td><td>Início de pausa · Saída</td></tr>
+  <tr><td>Início de pausa</td><td>Fim de pausa</td></tr>
+  <tr><td>Fim de pausa</td><td>Início de pausa · Saída</td></tr>
+  <tr><td>Saída</td><td>Entrada (novo turno)</td></tr>
+</table>
+
+<p>Se tentar uma coisa fora de ordem, a app explica em português o que falta
+fazer primeiro.</p>
+
+<h2 class="passo">1.5 Histórico e banco de horas</h2>
+
+<p>No separador <strong>Histórico</strong> vê mês a mês tudo o que marcou —
+com a hora, o método (QR ou GPS) e, quando foi por GPS, a que distância
+estava. Os botões em cima filtram só entradas, só saídas ou só pausas.</p>
+
+<figure class="telemovel">
+  <img src="imagens/app-historico.png" alt="Histórico com o banco de horas">
+  <figcaption>O cartão no topo é o seu banco de horas.</figcaption>
+</figure>
+
+<div class="caixa">
+  <div class="rotulo">Ler o banco de horas</div>
+  <p><strong>Saldo positivo</strong> (verde) — trabalhou mais do que o
+  horário. Conforme a política da casa, essas horas são compensadas com
+  folga ou pagas.</p>
+  <p><strong>Saldo negativo</strong> (vermelho) — tem horas em dívida.
+  <strong>Não é falta</strong>: é saldo a repor mais à frente.</p>
+</div>
+
+<h2 class="passo">1.6 Justificar uma falta</h2>
+
+<p>No separador <strong>Faltas</strong> toque em <strong>Nova
+justificação</strong>, escolha o dia (ou o intervalo de dias), o motivo
+— doença, férias, assunto pessoal, outro — e escreva uma nota se quiser.</p>
+
+<figure class="telemovel">
+  <img src="imagens/app-faltas.png" alt="Faltas e justificações">
+  <figcaption>Cada justificação fica com o seu estado bem visível.</figcaption>
+</figure>
+
+<p>A justificação fica <strong>pendente</strong> até o gestor a ver. Depois
+passa a <strong>aprovada</strong> ou <strong>recusada</strong> e recebe a
+resposta no mesmo ecrã.</p>
+
+<h2 class="passo">1.7 Perfil e palavra-passe</h2>
+
+<p>No separador <strong>Perfil</strong> vê os seus dados e o contrato (cargo,
+horas por semana). É também aqui que muda a palavra-passe e termina sessão.</p>
+
+<figure class="telemovel">
+  <img src="imagens/app-perfil.png" alt="Perfil do funcionário">
+</figure>
+
+<p>Se se esquecer da palavra-passe: no ecrã de entrada toque em
+<strong>«Esqueci-me da palavra-passe»</strong>, escreva o seu email e siga o
+link que chega por email. Se o email não aparecer em poucos minutos, veja o
+spam ou peça ao gestor para criar um acesso novo.</p>
+
+<!-- ========================= Parte 2 — gestor ======================= -->
+<section class="parte">
+  <div class="etiqueta">Parte 2</div>
+  <h2>Para o gestor</h2>
+  <p>Tudo o que se faz no painel: equipa, horários, QR code, faltas, banco de
+  horas e o mapa do mês.</p>
+</section>
+
+<h2 class="passo">2.1 Entrar no painel</h2>
+
+<p>O painel abre-se no computador (ou no telemóvel, mas é mais confortável
+num ecrã grande):</p>
+<p style="text-align:center"><code>anderson17quadri-cmd.github.io/Salinas/admin/</code></p>
+
+<p>Entre com o email e a palavra-passe da <strong>sua conta de gestor</strong>.
+Não é a conta do Supabase — é a conta de administrador criada para a
+pastelaria.</p>
+
+<h2 class="passo">2.2 Dashboard: quem está ao serviço</h2>
+
+<p>É a primeira página. Mostra o dia de hoje: quantos estão dentro, em pausa
+ou já fora, quem chegou atrasado e quantas justificações estão à espera.</p>
+
+<figure>
+  <img src="imagens/painel-dashboard.png" alt="Dashboard do dia">
+  <figcaption>Cada pessoa com o estado, a hora de entrada e o atraso em minutos.</figcaption>
+</figure>
+
+<h2 class="passo">2.3 Registar um funcionário</h2>
+
+<p>Em <strong>Funcionários</strong> → <strong>Novo funcionário</strong>. Basta
+o nome, o email, o cargo e as horas por semana.</p>
+
+<figure>
+  <img src="imagens/painel-funcionarios.png" alt="Lista de funcionários">
+</figure>
+
+<p>A coluna <strong>Conta</strong> diz se a pessoa já consegue entrar na app.
+Enquanto disser «Sem acesso», a ficha existe mas ainda não há login.</p>
+
+<h2 class="passo">2.4 Criar o acesso e entregar a palavra-passe</h2>
+
+<p>Na linha do funcionário clique em <strong>Criar acesso</strong>. O painel
+gera na hora uma palavra-passe fácil de ditar e mostra-a uma única vez.</p>
+
+<figure>
+  <img src="imagens/painel-acesso-criado.png" alt="Palavra-passe temporária gerada">
+  <figcaption>Copie ou anote antes de fechar — depois de fechar não há como voltar a ver.</figcaption>
+</figure>
+
+<div class="caixa">
+  <div class="rotulo">Porque é entregue em mão</div>
+  <p>O envio de emails do plano gratuito está limitado a <strong>2 por
+  hora</strong>, o que não chega para dar acesso a uma equipa de uma vez.
+  Entregar a palavra-passe em mão é mais rápido e não depende de caixas de
+  spam. Se perder a palavra-passe, o funcionário usa «Esqueci-me da
+  palavra-passe» na app.</p>
+</div>
+
+<h2 class="passo">2.5 Definir o horário — manhã, pão e noite</h2>
+
+<p>Na linha do funcionário clique em <strong>Horário</strong>. Em cima estão
+os três turnos da casa: um clique preenche de segunda a sábado.</p>
+
+<div class="turnos">
+  <div><div class="nome">Manhã</div><div class="horas">06:00 – 14:00</div><div class="nota">8 horas</div></div>
+  <div><div class="nome">Pão</div><div class="horas">11:00 – 19:00</div><div class="nota">8 horas</div></div>
+  <div><div class="nome">Noite</div><div class="horas">18:00 – 02:00</div><div class="nota">8 horas · passa a meia-noite</div></div>
+</div>
+
+<figure>
+  <img src="imagens/painel-turnos.png" alt="Escolher o turno no painel">
+  <figcaption>Depois de aplicar o turno pode ajustar dia a dia — deixe as horas
+  vazias para marcar folga.</figcaption>
+</figure>
+
+<div class="caixa">
+  <div class="rotulo">O turno da noite</div>
+  <p>Das 18:00 às 02:00 o turno atravessa a meia-noite. O Salinas conta isso
+  como <strong>8 horas</strong>, e não como um número negativo — ao lado de
+  cada dia aparece a duração calculada, com a etiqueta «noite» para não haver
+  dúvidas.</p>
+</div>
+
+<p>O horário serve para dois cálculos: o <strong>atraso</strong> que aparece no
+dashboard, e as <strong>horas esperadas</strong> do relatório mensal e do banco
+de horas. Sem horário definido, a pessoa continua a bater ponto normalmente —
+só não há com o que comparar.</p>
+
+<h2 class="passo">2.6 O QR code e o cartaz</h2>
+
+<p>Em <strong>QR Code</strong> está o código da pastelaria, com o logo ao
+centro. Descarregue o <strong>cartaz A4</strong>, imprima e afixe onde a
+equipa passa à entrada.</p>
+
+<figure>
+  <img src="imagens/painel-qrcode.png" alt="Página do QR code">
+</figure>
+
+<div class="caixa atencao">
+  <div class="rotulo">Gerar código novo</div>
+  <p>O botão <strong>Gerar novo código</strong> invalida o cartaz que está
+  afixado. Use-o se alguém tirar fotografia ao QR para bater ponto de casa —
+  mas não se esqueça de imprimir e trocar o cartaz a seguir.</p>
+</div>
+
+<h2 class="passo">2.7 Registos</h2>
+
+<p>Em <strong>Registos</strong> vê tudo o que foi marcado, com filtros por
+funcionário, por tipo e por intervalo de datas. Os registos feitos fora do
+raio aparecem assinalados, com a distância e a justificação escrita pela
+pessoa.</p>
+
+<figure>
+  <img src="imagens/painel-registos.png" alt="Lista de registos">
+</figure>
+
+<p>Se um registo estiver errado — alguém se esqueceu de marcar a saída, por
+exemplo — pode corrigi-lo aqui. As correções ficam marcadas como feitas pelo
+gestor.</p>
+
+<h2 class="passo">2.8 Justificações</h2>
+
+<p>Em <strong>Justificações</strong> estão os pedidos de faltas. Cada um mostra
+quem pediu, os dias, o motivo e a nota.</p>
+
+<figure>
+  <img src="imagens/painel-justificacoes.png" alt="Justificações pendentes">
+</figure>
+
+<p><strong>Aprovar</strong> faz com que aqueles dias deixem de contar como
+falta por marcar no relatório. <strong>Recusar</strong> mantém-nos como
+ausência. Nos dois casos pode escrever uma resposta, que a pessoa vê na app.</p>
+
+<h2 class="passo">2.9 Banco de horas</h2>
+
+<p>O banco de horas guarda a diferença entre o que foi trabalhado e o que
+estava previsto, mês a mês, por pessoa.</p>
+
+<figure>
+  <img src="imagens/painel-banco-horas.png" alt="Banco de horas">
+  <figcaption>Crédito, dívida e saldo líquido de cada funcionário.</figcaption>
+</figure>
+
+<h3>Fechar o período</h3>
+<p>No início de cada mês clique em <strong>Fechar período</strong> e escolha o
+mês anterior. O Salinas calcula a diferença de cada pessoa e lança-a no banco.
+Pode clicar duas vezes sem medo: um mês já fechado é ignorado, não conta a
+dobrar.</p>
+
+<h3>Lançar e liquidar à mão</h3>
+<p><strong>Lançar</strong> serve para acertos fora do cálculo automático (horas
+combinadas à parte, por exemplo). <strong>Liquidar</strong> fecha um movimento
+que já foi resolvido — pago, ou compensado com folga.</p>
+
+<h3>Fora do prazo</h3>
+<p>Os saldos com mais tempo do que o limite definido (por omissão 12 meses)
+aparecem marcados como <strong>fora do prazo</strong>. É um aviso para
+decidir: pagar, dar folga ou renegociar.</p>
+
+<h2 class="passo">2.10 Relatório mensal</h2>
+
+<p>Em <strong>Relatório mensal</strong> escolha o mês. Para cada pessoa vê as
+horas trabalhadas, as esperadas, o saldo, as faltas justificadas e pendentes,
+os dias com entrada e os dias sem registo nem justificação.</p>
+
+<figure>
+  <img src="imagens/painel-relatorio.png" alt="Relatório mensal">
+</figure>
+
+<p>O botão <strong>Exportar CSV</strong> descarrega um ficheiro que abre no
+Excel — é o que se manda à contabilidade.</p>
+
+<h2 class="passo">2.11 Definições</h2>
+
+<figure>
+  <img src="imagens/painel-definicoes.png" alt="Definições da empresa">
+</figure>
+
+<table>
+  <tr><th>Campo</th><th>Para que serve</th></tr>
+  <tr><td>Morada, latitude, longitude</td><td>O ponto a partir do qual se mede o raio do GPS.</td></tr>
+  <tr><td>Raio permitido</td><td>Distância aceite, em metros. 100 m é um bom começo.</td></tr>
+  <tr><td>QR code / GPS</td><td>Ligar ou desligar cada método de marcação.</td></tr>
+  <tr><td>Foto obrigatória</td><td>Pede uma selfie a cada registo. Mais rigor, mais demora.</td></tr>
+  <tr><td>Regime de folgas</td><td>Fixo (folga sempre no mesmo dia) ou Rotativo (a folga muda de semana — caso da Salinas).</td></tr>
+  <tr><td>Política do banco de horas</td><td>Apenas reportar · Compensar com folga · Descontar · Pagar como extra.</td></tr>
+  <tr><td>Limite de compensação</td><td>Meses até um saldo ser marcado como fora do prazo.</td></tr>
+</table>
+
+<div class="caixa">
+  <div class="rotulo">A escala 6x2 da Salinas</div>
+  <p>A equipa trabalha 6 dias e folga 2, e a folga vai mudando de semana
+  para semana — por isso o horário de cada pessoa fica preenchido todos os
+  dias, e é o próprio dia sem ponto batido que conta como
+  <strong>folga</strong>, não como falta. É essa a diferença entre os dois
+  regimes: no <strong>fixo</strong>, um dia com horário e sem ponto é falta;
+  no <strong>rotativo</strong> — o da Salinas — passa a ser folga, e só é
+  falta se a pessoa tiver justificação (o que prova que, afinal, estava de
+  escala nesse dia).</p>
+</div>
+
+<div class="caixa">
+  <div class="rotulo">Para ligar o GPS</div>
+  <p>Enquanto a latitude e a longitude estiverem vazias, só o QR code funciona.
+  Para as obter: abra o Google Maps, carregue e mantenha no sítio exacto da
+  pastelaria, e copie os dois números que aparecem em cima.</p>
+</div>
+
+<!-- ============================ Parte 3 ============================= -->
+<section class="parte">
+  <div class="etiqueta">Parte 3</div>
+  <h2>Perguntas frequentes</h2>
+</section>
+
+<h3>Esqueci-me de marcar a saída ontem. E agora?</h3>
+<p>Diga ao gestor. Ele corrige o registo em <strong>Registos</strong>. Como a
+app não deixa duas entradas seguidas, no dia seguinte vai aparecer-lhe a
+indicação de que ficou uma entrada por fechar.</p>
+
+<h3>O QR não lê.</h3>
+<p>Confirme que autorizou a câmara e limpe a lente. Se estiver escuro, acenda
+a luz. Se mesmo assim não ler, use o GPS — ou peça ao gestor para imprimir o
+cartaz outra vez, maior.</p>
+
+<h3>Diz que estou fora do raio e eu estou na pastelaria.</h3>
+<p>Dentro de edifícios o GPS erra facilmente 50–100 metros. Bata ponto na
+mesma e escreva a justificação; ou use o QR code, que não depende de
+localização. O gestor pode também aumentar o raio nas Definições.</p>
+
+<h3>A app abre e fica em branco / mostra coisas antigas.</h3>
+<p>Feche-a por completo e abra outra vez. A app guarda uma cópia para
+funcionar sem rede e, ao reabrir, vai buscar a versão nova.</p>
+
+<h3>Trabalho à noite. As horas contam bem?</h3>
+<p>Sim. O turno das 18:00 às 02:00 conta 8 horas. Bata entrada às 18:00 e
+saída às 02:00 normalmente — o Salinas percebe que passou a meia-noite.</p>
+
+<h3>Um funcionário saiu da casa.</h3>
+<p>Em <strong>Funcionários</strong>, <strong>Desactivar</strong>. A ficha e o
+histórico ficam guardados para os relatórios, mas a pessoa deixa de conseguir
+bater ponto.</p>
+
+<h3>Tenho saldo negativo. Isso é falta?</h3>
+<p>Não. Saldo negativo é <strong>dívida de horas</strong> — horas a repor.
+Falta é um dia em que não apareceu. São coisas separadas e aparecem em sítios
+diferentes.</p>
+
+<h3>Não bati ponto ontem, mas era o meu dia de folga. Vai contar como falta?</h3>
+<p>Não. A Salinas usa o regime <strong>rotativo</strong>: como a folga muda
+de semana para semana, o próprio dia sem ponto e sem justificação é que é
+lido como folga. Só conta como falta um dia em que houvesse uma
+justificação a dizer que, afinal, estava de escala.</p>
+
+<!-- ============================ Parte 4 ============================= -->
+<section class="parte">
+  <div class="etiqueta">Parte 4</div>
+  <h2>Tratar da segurança da conta</h2>
+  <p>Três coisas a fazer uma vez, e depois esquecer.</p>
+</section>
+
+<ol>
+  <li><strong>Mudar a palavra-passe de gestor.</strong> A que foi usada na
+  instalação é temporária e passou por um chat. Troque-a em «Esqueci-me da
+  palavra-passe», no painel.</li>
+
+  <li><strong>Revogar as chaves da instalação.</strong> No painel do Supabase:
+  <em>Project Settings → API Keys</em>, apagar a chave secreta chamada
+  <code>claudinho</code>; e na conta, <em>Access Tokens</em>, apagar o token
+  <code>claude-setup-salinas</code>. Serviram só para montar o projecto e já não
+  são precisas.</li>
+
+  <li><strong>Pedir a cada funcionário que mude a palavra-passe</strong> na
+  primeira vez que entrar.</li>
+</ol>
+
+<div class="caixa">
+  <div class="rotulo">O que já está protegido</div>
+  <p>Cada pessoa só vê os seus próprios registos; o token do QR code nem sequer
+  é devolvido pela API a quem não é gestor; e as fotografias ficam separadas
+  por empresa. Isto está garantido no servidor — não depende da app.</p>
+</div>
+
+<div class="fim">
+  Salinas — registo de ponto da Pastelaria Salinas<br>
+  Este manual é gerado a partir de <code>docs/manual/manual.html</code>.
+</div>
+
+</body>
+</html>

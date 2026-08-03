@@ -591,6 +591,7 @@ as $$
 declare
   v_empresa_id uuid;
   v_tz text;
+  v_regime text;
   v_hoje date;
   v_resultado jsonb;
 begin
@@ -599,7 +600,8 @@ begin
   end if;
 
   v_empresa_id := auth_empresa_id();
-  select timezone into v_tz from empresas where id = v_empresa_id;
+  select timezone, regime_folgas into v_tz, v_regime
+  from empresas where id = v_empresa_id;
   v_hoje := (now() at time zone v_tz)::date;
 
   with ativos as (
@@ -654,6 +656,9 @@ begin
   select jsonb_build_object(
     'data', v_hoje,
     'timezone', v_tz,
+    -- Em regime rotativo, quem não bateu ponto hoje pode estar de folga —
+    -- o painel muda o rótulo em vez de lhe chamar ausência.
+    'regime_folgas', v_regime,
     'total_ativos', (select count(*) from ativos),
     'dentro', (select count(*) from detalhe where estado = 'dentro'),
     'em_pausa', (select count(*) from detalhe where estado = 'pausa'),
@@ -716,6 +721,23 @@ grant execute on function _duracao_turno(time, time) to authenticated;
 --
 -- Tempo de trabalho = intervalos que começam numa 'entrada' ou num
 -- 'fim_pausa' e terminam no evento seguinte. As pausas ficam de fora.
+--
+-- Folgas, conforme `empresas.regime_folgas`:
+--
+--   'fixo'      — a folga é o dia da semana sem horário definido. Um dia
+--                 com horário e sem ponto é falta.
+--   'rotativo'  — escala 6x2 e afins: as folgas mudam de semana para
+--                 semana, por isso não há como as ter no horário semanal.
+--                 A regra passa a ser a do Anderson: **o dia sem ponto é o
+--                 dia de folga**. Não conta horas esperadas nem falta, e
+--                 por isso também não gera dívida no banco de horas. Um dia
+--                 com justificação (doença, férias) continua a contar como
+--                 dia de trabalho previsto — a justificação prova que não
+--                 era folga.
+--
+-- Sai `dias_folga` para o relatório poder dizer quantos dias de descanso a
+-- pessoa teve, em vez de os apresentar como ausências.
+drop function if exists _horas_do_periodo(uuid, date, date, text);
 create or replace function _horas_do_periodo(
   p_empresa_id uuid,
   p_inicio date,
@@ -727,14 +749,19 @@ returns table (
   horas_trabalhadas numeric,
   horas_esperadas numeric,
   dias_com_entrada integer,
-  dias_sem_registo_nem_justificacao integer
+  dias_sem_registo_nem_justificacao integer,
+  dias_folga integer
 )
 language sql
 stable
 security definer
 set search_path = public
 as $$
-  with func as (
+  with regime as (
+    select coalesce(regime_folgas, 'fixo') as modo
+    from empresas where id = p_empresa_id
+  ),
+  func as (
     select * from funcionarios where empresa_id = p_empresa_id
   ),
   ord as (
@@ -768,15 +795,43 @@ as $$
   ),
   -- Um dia esperado por cada dia do período em que o funcionário tem
   -- horário definido para aquele dia da semana.
-  esperado_dia as (
+  previsto_dia as (
     select
       h.funcionario_id,
       dias.dia,
-      _duracao_turno(h.hora_entrada, h.hora_saida) as horas
+      _duracao_turno(h.hora_entrada, h.hora_saida) as horas,
+      exists (
+        select 1 from registos_ponto r
+        where r.funcionario_id = h.funcionario_id
+          and (r."timestamp" at time zone p_tz)::date = dias.dia
+      ) as tem_registo,
+      exists (
+        select 1 from faltas_justificacoes j
+        where j.funcionario_id = h.funcionario_id
+          and j.data = dias.dia
+          and j.status <> 'rejeitado'
+      ) as tem_justificacao
     from dias
     join horarios_esperados h on h.dia_semana = dias.dow
     join func f on f.id = h.funcionario_id
     where h.hora_entrada is not null and h.hora_saida is not null
+  ),
+  -- Em regime rotativo, o dia sem ponto e sem justificação é folga: sai
+  -- de cena por completo, não conta horas nem falta.
+  esperado_dia as (
+    select p.*
+    from previsto_dia p, regime
+    where regime.modo <> 'rotativo'
+       or p.tem_registo
+       or p.tem_justificacao
+  ),
+  folgas as (
+    select p.funcionario_id, count(*)::int as dias
+    from previsto_dia p, regime
+    where regime.modo = 'rotativo'
+      and not p.tem_registo
+      and not p.tem_justificacao
+    group by p.funcionario_id
   ),
   esperado as (
     select e.funcionario_id, sum(e.horas) as horas
@@ -789,34 +844,38 @@ as $$
   faltas as (
     select e.funcionario_id, count(*)::int as dias
     from esperado_dia e
-    where not exists (
-      select 1 from registos_ponto r
-      where r.funcionario_id = e.funcionario_id
-        and (r."timestamp" at time zone p_tz)::date = e.dia
-    )
-    and not exists (
-      select 1 from faltas_justificacoes j
-      where j.funcionario_id = e.funcionario_id
-        and j.data = e.dia
-        and j.status <> 'rejeitado'
-    )
+    where not e.tem_registo and not e.tem_justificacao
     group by e.funcionario_id
+  ),
+  -- Ter horário definido é diferente de ter horas previstas no período:
+  -- em regime rotativo, quem tem horário mas esteve de folga o mês
+  -- inteiro tem zero horas previstas — não é caso de estimar pelas horas
+  -- semanais, senão apareciam horas em dívida que ninguém devia.
+  com_horario as (
+    select distinct h.funcionario_id
+    from horarios_esperados h
+    join func f on f.id = h.funcionario_id
+    where h.hora_entrada is not null and h.hora_saida is not null
   )
   select
     f.id,
     round(coalesce(t.horas, 0)::numeric, 2),
-    round(coalesce(
-      e.horas,
+    round(
+      case when ch.funcionario_id is not null then coalesce(e.horas, 0)
       -- Sem horário definido, estima-se a partir das horas semanais.
-      f.horas_semanais_esperadas * ((p_fim - p_inicio) / 7.0)
-    )::numeric, 2),
+      else f.horas_semanais_esperadas * ((p_fim - p_inicio) / 7.0)
+      end::numeric
+    , 2),
     coalesce(en.dias, 0),
-    coalesce(fa.dias, 0)
+    coalesce(fa.dias, 0),
+    coalesce(fo.dias, 0)
   from func f
-  left join trabalhado t on t.funcionario_id = f.id
-  left join esperado e   on e.funcionario_id = f.id
-  left join entradas en  on en.funcionario_id = f.id
-  left join faltas fa    on fa.funcionario_id = f.id;
+  left join trabalhado t  on t.funcionario_id = f.id
+  left join esperado e    on e.funcionario_id = f.id
+  left join entradas en   on en.funcionario_id = f.id
+  left join faltas fa     on fa.funcionario_id = f.id
+  left join folgas fo     on fo.funcionario_id = f.id
+  left join com_horario ch on ch.funcionario_id = f.id;
 $$;
 
 revoke all on function _horas_do_periodo(uuid, date, date, text) from public, anon, authenticated;
@@ -834,6 +893,7 @@ declare
   v_empresa_id uuid;
   v_tz text;
   v_politica text;
+  v_regime text;
   v_inicio date;
   v_fim date;
   v_resultado jsonb;
@@ -847,7 +907,8 @@ begin
   end if;
 
   v_empresa_id := auth_empresa_id();
-  select timezone, politica_banco_horas into v_tz, v_politica
+  select timezone, politica_banco_horas, regime_folgas
+    into v_tz, v_politica, v_regime
   from empresas where id = v_empresa_id;
 
   v_inicio := make_date(p_ano, p_mes, 1);
@@ -878,6 +939,7 @@ begin
       round((h.horas_trabalhadas - h.horas_esperadas)::numeric, 2) as saldo_horas,
       h.dias_com_entrada,
       h.dias_sem_registo_nem_justificacao,
+      h.dias_folga,
       coalesce(fa.justificadas, 0) as faltas_justificadas,
       coalesce(fa.pendentes, 0) as faltas_pendentes,
       -- Saldo acumulado do banco de horas, para lá deste mês
@@ -893,6 +955,7 @@ begin
     'fim', v_fim - 1,
     'timezone', v_tz,
     'politica_banco_horas', v_politica,
+    'regime_folgas', v_regime,
     'total_horas_trabalhadas', (select round(coalesce(sum(horas_trabalhadas),0), 2) from linhas),
     'total_horas_esperadas', (select round(coalesce(sum(horas_esperadas),0), 2) from linhas),
     'total_saldo_banco_horas', (select round(coalesce(sum(saldo_banco_horas),0), 2) from linhas),
