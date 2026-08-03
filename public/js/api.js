@@ -53,6 +53,31 @@ export async function entrar(email, palavraPasse) {
   if (error) throw error;
 }
 
+/**
+ * Cria a conta de acesso de um funcionário.
+ *
+ * Não é preciso convidar ninguém: o admin regista o funcionário no painel
+ * e o trigger `on_auth_user_created` liga as duas pontas pelo email. Quem
+ * criar conta com um email que não esteja registado consegue entrar, mas
+ * a app diz-lhe que não está associado a nenhuma empresa e não o deixa
+ * fazer nada — é o RLS a proteger, não o ecrã.
+ *
+ * A confirmação por email é obrigatória de propósito: sem ela, alguém
+ * podia registar-se com o email de um colega antes dele e ficar ligado à
+ * ficha errada.
+ */
+export async function criarConta(email, palavraPasse) {
+  const { data, error } = await supabase().auth.signUp({
+    email: email.trim().toLowerCase(),
+    password: palavraPasse,
+    options: { emailRedirectTo: location.origin + location.pathname },
+  });
+  if (error) throw error;
+
+  // `session` só vem preenchida quando a confirmação está desligada.
+  return { precisaConfirmar: !data.session };
+}
+
 export async function sair() {
   await supabase().auth.signOut();
 }

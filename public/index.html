@@ -68,10 +68,41 @@
       <button type="button" class="botao botao-texto" id="login-recuperar">
         Esqueci-me da palavra-passe
       </button>
+      <button type="button" class="botao botao-secundario" id="ir-criar-conta">
+        Primeira vez? Criar a minha conta
+      </button>
     </form>
     <p class="nota nota-centro">
       <button type="button" class="ligacao" id="mudar-projecto">Mudar de projecto Supabase</button>
     </p>
+  </div>
+</section>
+
+<!-- ====================== Criar conta ============================ -->
+<section id="ecra-criar-conta" class="ecra-marca oculto">
+  <div class="painel-marca">
+    <div class="marca-logo marca-logo-pequeno" id="criar-conta-logo"></div>
+    <h1>Criar a minha conta</h1>
+    <p class="nota">
+      Use o <strong>mesmo email</strong> que o seu gestor registou. Se usar outro,
+      a conta é criada mas não fica ligada à empresa.
+    </p>
+    <form id="form-criar-conta" class="formulario">
+      <label>Email
+        <input type="email" id="criar-email" autocomplete="username"
+               inputmode="email" autocapitalize="none" required />
+      </label>
+      <label>Palavra-passe
+        <input type="password" id="criar-pw" autocomplete="new-password" minlength="8" required />
+      </label>
+      <label>Repita a palavra-passe
+        <input type="password" id="criar-pw2" autocomplete="new-password" minlength="8" required />
+      </label>
+      <div id="criar-erro" class="alerta alerta-erro oculto"></div>
+      <div id="criar-sucesso" class="alerta alerta-sucesso oculto"></div>
+      <button type="submit" class="botao botao-primario" id="criar-submeter">Criar conta</button>
+      <button type="button" class="botao botao-texto" id="voltar-login">Voltar</button>
+    </form>
   </div>
 </section>
 

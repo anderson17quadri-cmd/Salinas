@@ -3,7 +3,7 @@
 // Arranque, autenticação, encaminhamento e instalação no ecrã principal
 // =====================================================================
 
-import { definirPalavraPasse, entrar, mensagemDeErro, recuperarPalavraPasse, reiniciarCliente, sair, sessaoActual } from './api.js';
+import { criarConta, definirPalavraPasse, entrar, mensagemDeErro, recuperarPalavraPasse, reiniciarCliente, sair, sessaoActual } from './api.js';
 import { configFoiInjectada, guardarConfig, limparConfig, obterConfig } from './config.js';
 import { notificar, pintarLogo } from './ui.js';
 
@@ -23,6 +23,7 @@ const ecra = {
   splash: document.getElementById('ecra-splash'),
   config: document.getElementById('ecra-config'),
   login: document.getElementById('ecra-login'),
+  criarConta: document.getElementById('ecra-criar-conta'),
   novaPw: document.getElementById('ecra-nova-pw'),
   app: document.getElementById('app'),
 };
@@ -38,7 +39,8 @@ pintarLogo(
   document.getElementById('splash-logo'),
   document.getElementById('config-logo'),
   document.getElementById('login-logo'),
-  document.getElementById('nova-pw-logo')
+  document.getElementById('nova-pw-logo'),
+  document.getElementById('criar-conta-logo')
 );
 
 // ---------------------------------------------------------------------
@@ -121,6 +123,70 @@ document.getElementById('login-recuperar').addEventListener('click', async () =>
 });
 
 // ---------------------------------------------------------------------
+// Criar conta
+// ---------------------------------------------------------------------
+document.getElementById('ir-criar-conta').addEventListener('click', () => {
+  document.getElementById('criar-email').value =
+    document.getElementById('login-email').value;
+  mostrar('criarConta');
+});
+
+document.getElementById('voltar-login').addEventListener('click', () => mostrar('login'));
+
+document.getElementById('form-criar-conta').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const erro = document.getElementById('criar-erro');
+  const sucesso = document.getElementById('criar-sucesso');
+  const botao = document.getElementById('criar-submeter');
+
+  erro.classList.add('oculto');
+  sucesso.classList.add('oculto');
+
+  const email = document.getElementById('criar-email').value;
+  const pw = document.getElementById('criar-pw').value;
+  const pw2 = document.getElementById('criar-pw2').value;
+
+  if (pw.length < 8) {
+    erro.textContent = 'A palavra-passe tem de ter pelo menos 8 caracteres.';
+    erro.classList.remove('oculto');
+    return;
+  }
+  if (pw !== pw2) {
+    erro.textContent = 'As duas palavras-passe não coincidem.';
+    erro.classList.remove('oculto');
+    return;
+  }
+
+  botao.disabled = true;
+  botao.textContent = 'A criar…';
+
+  try {
+    const { precisaConfirmar } = await criarConta(email, pw);
+
+    if (precisaConfirmar) {
+      sucesso.innerHTML =
+        'Conta criada. Enviámos um email para <strong>' + email.trim() + '</strong>. '
+        + 'Abra-o e clique no link para confirmar — depois já pode entrar. '
+        + 'Veja também a pasta de spam.';
+      sucesso.classList.remove('oculto');
+      document.getElementById('form-criar-conta').reset();
+    } else {
+      await arrancar();
+    }
+  } catch (e2) {
+    const msg = mensagemDeErro(e2, 'Não foi possível criar a conta.');
+    // O plano gratuito do Supabase só deixa enviar 2 emails por hora.
+    erro.textContent = /rate limit|too many|segundos|seconds/i.test(msg)
+      ? 'Já foram enviados muitos emails nesta hora. Espere um pouco e tente de novo.'
+      : msg;
+    erro.classList.remove('oculto');
+  } finally {
+    botao.disabled = false;
+    botao.textContent = 'Criar conta';
+  }
+});
+
+// ---------------------------------------------------------------------
 // Recuperação de palavra-passe
 // ---------------------------------------------------------------------
 /**
@@ -132,7 +198,10 @@ document.getElementById('login-recuperar').addEventListener('click', async () =>
  */
 function pedidoDeRecuperacao() {
   const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
-  return hash.get('type') === 'recovery' || hash.has('access_token');
+  // Tem de ser `type=recovery` e mais nada: a confirmação de conta
+  // (`type=signup`) também traz um access_token, e apanhá-la aqui mandava
+  // quem acabou de confirmar o email para o ecrã de mudar a palavra-passe.
+  return hash.get('type') === 'recovery';
 }
 
 async function tratarRecuperacao() {
