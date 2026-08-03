@@ -11,7 +11,7 @@ export function supabase() {
   if (!config) throw new Error('Projecto Supabase por configurar.');
 
   cliente = createClient(config.url, config.chaveAnon, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
   });
   return cliente;
 }
@@ -63,7 +63,26 @@ export async function sessaoActual() {
 }
 
 export async function recuperarPalavraPasse(email) {
-  const { error } = await supabase().auth.resetPasswordForEmail(email.trim().toLowerCase());
+  // Sem `redirectTo`, o Supabase manda o link para o Site URL do projecto
+  // — por omissão localhost — e o email ficava inútil. Apontar para a
+  // própria página garante que volta para onde o pedido foi feito.
+  const destino = location.origin + location.pathname;
+
+  const { error } = await supabase().auth.resetPasswordForEmail(
+    email.trim().toLowerCase(),
+    { redirectTo: destino }
+  );
+  if (error) throw error;
+}
+
+/**
+ * Define uma nova palavra-passe para a sessão actual.
+ *
+ * Usado no fim do fluxo de recuperação: o link do email traz um token que
+ * o supabase-js converte em sessão, e é essa sessão que autoriza a troca.
+ */
+export async function definirPalavraPasse(nova) {
+  const { error } = await supabase().auth.updateUser({ password: nova });
   if (error) throw error;
 }
 

@@ -57,6 +57,24 @@
   </div>
 </section>
 
+<!-- ================== Definir nova palavra-passe =================== -->
+<section id="ecra-nova-pw" class="ecra-centrado oculto">
+  <div class="cartao cartao-estreito">
+    <img class="marca-logo" src="../assets/logo.png" alt="Pastelaria Salinas" />
+    <p class="subtitulo">Definir palavra-passe</p>
+    <form id="form-nova-pw" class="formulario">
+      <label>Nova palavra-passe
+        <input type="password" id="nova-pw" autocomplete="new-password" minlength="8" required />
+      </label>
+      <label>Repita a palavra-passe
+        <input type="password" id="nova-pw2" autocomplete="new-password" minlength="8" required />
+      </label>
+      <div id="nova-pw-erro" class="alerta alerta-erro oculto"></div>
+      <button type="submit" class="botao botao-primario" id="nova-pw-submeter">Guardar</button>
+    </form>
+  </div>
+</section>
+
 <!-- ======================== Aplicação ============================== -->
 <div id="app" class="oculto">
   <aside class="barra-lateral">

@@ -3,7 +3,7 @@
 // Arranque, autenticação, encaminhamento e instalação no ecrã principal
 // =====================================================================
 
-import { entrar, mensagemDeErro, recuperarPalavraPasse, reiniciarCliente, sair, sessaoActual } from './api.js';
+import { definirPalavraPasse, entrar, mensagemDeErro, recuperarPalavraPasse, reiniciarCliente, sair, sessaoActual } from './api.js';
 import { configFoiInjectada, guardarConfig, limparConfig, obterConfig } from './config.js';
 import { notificar, pintarLogo } from './ui.js';
 
@@ -23,6 +23,7 @@ const ecra = {
   splash: document.getElementById('ecra-splash'),
   config: document.getElementById('ecra-config'),
   login: document.getElementById('ecra-login'),
+  novaPw: document.getElementById('ecra-nova-pw'),
   app: document.getElementById('app'),
 };
 
@@ -36,7 +37,8 @@ function mostrar(qual) {
 pintarLogo(
   document.getElementById('splash-logo'),
   document.getElementById('config-logo'),
-  document.getElementById('login-logo')
+  document.getElementById('login-logo'),
+  document.getElementById('nova-pw-logo')
 );
 
 // ---------------------------------------------------------------------
@@ -117,6 +119,65 @@ document.getElementById('login-recuperar').addEventListener('click', async () =>
     erro.classList.remove('oculto');
   }
 });
+
+// ---------------------------------------------------------------------
+// Recuperação de palavra-passe
+// ---------------------------------------------------------------------
+/**
+ * O link do email traz `#access_token=…&type=recovery`. O supabase-js
+ * converte-o em sessão sozinho, mas essa sessão só serve para uma coisa:
+ * definir a nova palavra-passe. Sem este ecrã, quem clicasse no link
+ * entrava na app com a palavra-passe antiga — ou nenhuma — e nunca
+ * chegava a defini-la.
+ */
+function pedidoDeRecuperacao() {
+  const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
+  return hash.get('type') === 'recovery' || hash.has('access_token');
+}
+
+async function tratarRecuperacao() {
+  mostrar('novaPw');
+
+  const form = document.getElementById('form-nova-pw');
+  const erro = document.getElementById('nova-pw-erro');
+  const botao = document.getElementById('nova-pw-submeter');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    erro.classList.add('oculto');
+
+    const nova = document.getElementById('nova-pw').value;
+    const repetir = document.getElementById('nova-pw2').value;
+
+    if (nova.length < 8) {
+      erro.textContent = 'A palavra-passe tem de ter pelo menos 8 caracteres.';
+      erro.classList.remove('oculto');
+      return;
+    }
+    if (nova !== repetir) {
+      erro.textContent = 'As duas palavras-passe não coincidem.';
+      erro.classList.remove('oculto');
+      return;
+    }
+
+    botao.disabled = true;
+    botao.textContent = 'A guardar…';
+
+    try {
+      await definirPalavraPasse(nova);
+      // Limpa o token do endereço antes de seguir.
+      history.replaceState(null, '', location.pathname);
+      notificar('Palavra-passe definida.', 'sucesso');
+      await arrancar();
+    } catch (e2) {
+      erro.textContent = mensagemDeErro(e2, 'Não foi possível guardar.');
+      erro.classList.remove('oculto');
+    } finally {
+      botao.disabled = false;
+      botao.textContent = 'Guardar';
+    }
+  });
+}
 
 // ---------------------------------------------------------------------
 // Encaminhamento entre separadores
@@ -245,6 +306,14 @@ if ('serviceWorker' in navigator) {
 async function arrancar() {
   if (!obterConfig()) {
     mostrar('config');
+    return;
+  }
+
+  // Tem de ser antes de olhar para a sessão: o link de recuperação cria
+  // uma sessão válida, e sem esta verificação entrava-se na app em vez de
+  // se definir a palavra-passe.
+  if (pedidoDeRecuperacao()) {
+    await tratarRecuperacao();
     return;
   }
 

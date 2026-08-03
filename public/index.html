@@ -75,6 +75,24 @@
   </div>
 </section>
 
+<!-- ================= Definir nova palavra-passe ================== -->
+<section id="ecra-nova-pw" class="ecra-marca oculto">
+  <div class="painel-marca">
+    <div class="marca-logo marca-logo-pequeno" id="nova-pw-logo"></div>
+    <h1>Definir palavra-passe</h1>
+    <form id="form-nova-pw" class="formulario">
+      <label>Nova palavra-passe
+        <input type="password" id="nova-pw" autocomplete="new-password" minlength="8" required />
+      </label>
+      <label>Repita a palavra-passe
+        <input type="password" id="nova-pw2" autocomplete="new-password" minlength="8" required />
+      </label>
+      <div id="nova-pw-erro" class="alerta alerta-erro oculto"></div>
+      <button type="submit" class="botao botao-primario" id="nova-pw-submeter">Guardar</button>
+    </form>
+  </div>
+</section>
+
 <!-- ======================== Aplicação ============================ -->
 <div id="app" class="oculto">
   <div id="barra-offline" class="barra-offline oculto">Sem ligação — os registos precisam de Internet.</div>
