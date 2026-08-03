@@ -1,0 +1,13 @@
+{
+  "name": "salinas-tools",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Utilitários de linha de comandos para a Salinas.",
+  "scripts": {
+    "qrcode": "node gerar-qrcode.js"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  }
+}

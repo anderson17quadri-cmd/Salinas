@@ -1,0 +1,46 @@
+# Dependências
+node_modules/
+.pnp
+.pnp.js
+
+# Variáveis de ambiente — NUNCA commitar
+.env
+.env.*
+!.env.example
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Android / build nativo
+app/android/
+app/ios/
+*.apk
+*.aab
+*.keystore
+
+# Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+
+# Ficheiros gerados
+admin/qr/*.png
+tools/output/
