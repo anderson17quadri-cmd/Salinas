@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <title>Salinas — Manual de utilização</title>
 <style>
-/* Manual simplificado: pouco texto, imagem grande por passo. Fonte deste
-   ficheiro é este HTML; o PDF é gerado a partir dele (ver README ao lado). */
+/* Manual passo-a-passo, sem mais nada à volta. Fonte deste ficheiro é
+   este HTML; o PDF é gerado a partir dele (ver README ao lado). */
 
 @page { size: A4; margin: 16mm 16mm 18mm; }
 
@@ -27,8 +27,6 @@ body {
   --borda: #E6DCCB;
 }
 
-/* -------------------------------- Capa -------------------------------- */
-
 .capa {
   height: 251mm;
   display: flex;
@@ -44,8 +42,6 @@ body {
 .capa .links { margin-top: 14mm; font-size: 11pt; }
 .capa .links b { display: block; margin-top: 3mm; }
 
-/* ------------------------------ Secções -------------------------------- */
-
 .parte {
   page-break-before: always;
   background: var(--tinta);
@@ -60,44 +56,19 @@ body {
 
 .passo {
   page-break-inside: avoid;
-  margin: 9mm 0;
+  margin: 8mm 0;
 }
 .passo h2 {
-  font-size: 16pt;
+  font-size: 15pt;
   margin: 0 0 3mm;
   padding-bottom: 2mm;
   border-bottom: 2pt solid var(--laranja);
 }
-.passo p { margin: 3mm 0; font-size: 12pt; }
-.passo p.legenda { color: var(--texto-suave); font-size: 10.5pt; font-style: italic; margin-top: 2mm; }
+.passo p { margin: 2mm 0 3mm; font-size: 11.5pt; }
 
-img.grande { display: block; margin: 4mm auto; border: 1pt solid var(--borda); border-radius: 3mm; }
-.w-tel { width: 68mm; }
+img.grande { display: block; margin: 0 auto; border: 1pt solid var(--borda); border-radius: 3mm; }
+.w-tel { width: 62mm; }
 .w-painel { width: 100%; max-width: 165mm; }
-
-.duo { display: flex; gap: 6mm; justify-content: center; align-items: flex-start; }
-.duo img { width: 58mm; }
-
-.dica {
-  background: #FDF0DA;
-  border-left: 4pt solid var(--laranja);
-  border-radius: 0 3mm 3mm 0;
-  padding: 3mm 5mm;
-  margin: 4mm 0;
-  font-size: 11pt;
-}
-.dica b { color: #B87A0B; }
-
-.turnos { display: flex; gap: 4mm; margin: 5mm 0; }
-.turnos div {
-  flex: 1;
-  border: 1pt solid var(--borda);
-  border-radius: 3mm;
-  padding: 4mm;
-  text-align: center;
-}
-.turnos .nome { font-weight: 700; font-size: 13pt; }
-.turnos .horas { color: #B87A0B; font-weight: 600; }
 
 code {
   font-family: Consolas, monospace;
@@ -109,7 +80,6 @@ code {
 </head>
 <body>
 
-<!-- Capa -->
 <section class="capa">
   <img src="imagens/logo.png" alt="Pastelaria Salinas">
   <h1>Salinas</h1>
@@ -121,55 +91,39 @@ code {
 </section>
 
 <!-- ===================== PARTE 1 — FUNCIONÁRIO ===================== -->
-<section class="parte"><h1>Para o funcionário</h1><p>instalar, entrar e bater ponto</p></section>
+<section class="parte"><h1>Para o funcionário</h1></section>
 
 <div class="passo">
   <h2>1. Instalar a app</h2>
-  <p>Abra <code>anderson17quadri-cmd.github.io/Salinas/</code> no telemóvel.</p>
-  <p><b>Android (Chrome):</b> três pontinhos → «Instalar aplicação».</p>
-  <p><b>iPhone (Safari):</b> botão de partilha → «Adicionar ao ecrã principal».</p>
+  <p>Abra <code>anderson17quadri-cmd.github.io/Salinas/</code> no telemóvel. Android: três pontinhos → «Instalar aplicação». iPhone: botão de partilha → «Adicionar ao ecrã principal».</p>
 </div>
 
 <div class="passo">
   <h2>2. Entrar</h2>
-  <p>O gestor entrega-lhe o email e uma palavra-passe (ex.: <code>GZCV-2694-CT</code>). Escreva os dois e toque em <b>Entrar</b>.</p>
+  <p>Escreva o email e a palavra-passe que o gestor lhe deu.</p>
   <img class="grande w-tel" src="imagens/app-login.png" alt="Ecrã de entrada">
 </div>
 
 <div class="passo">
   <h2>3. Bater ponto</h2>
-  <p>É o botão grande laranja. Por baixo diz sempre o que vai registar.</p>
+  <p>Toque no botão laranja. Depois em «Ler QR code» (aponte ao cartaz) ou «Usar GPS».</p>
   <img class="grande w-tel" src="imagens/app-inicio.png" alt="Ecrã inicial">
-  <p class="legenda">Toque em «Ler QR code» e aponte ao cartaz da pastelaria, ou em «Usar GPS».</p>
 </div>
 
 <div class="passo">
-  <h2>4. Se houver mais do que uma opção</h2>
-  <p>Às vezes a app pergunta o que quer marcar — escolha e pronto.</p>
-  <img class="grande w-tel" src="imagens/app-escolha.png" alt="Escolher o tipo de registo">
-</div>
-
-<div class="passo">
-  <h2>5. Histórico e banco de horas</h2>
-  <p>No separador <b>Histórico</b> vê tudo o que marcou e o seu saldo de horas.</p>
+  <h2>4. Histórico e banco de horas</h2>
+  <p>No separador Histórico vê os registos e o saldo de horas.</p>
   <img class="grande w-tel" src="imagens/app-historico.png" alt="Histórico">
-  <div class="dica"><b>Saldo negativo não é falta</b> — são horas a repor.</div>
 </div>
 
 <div class="passo">
-  <h2>6. Justificar uma falta</h2>
-  <p>No separador <b>Faltas</b>, toque em «Nova justificação», escolha o dia e o motivo.</p>
+  <h2>5. Justificar uma falta</h2>
+  <p>No separador Faltas, toque em «Nova justificação».</p>
   <img class="grande w-tel" src="imagens/app-faltas.png" alt="Faltas">
 </div>
 
-<div class="passo">
-  <h2>7. Perfil e palavra-passe</h2>
-  <p>Mude a sua palavra-passe assim que entrar pela primeira vez.</p>
-  <img class="grande w-tel" src="imagens/app-perfil.png" alt="Perfil">
-</div>
-
 <!-- ======================= PARTE 2 — GESTOR ========================= -->
-<section class="parte"><h1>Para o gestor</h1><p>equipa, horários e relatórios</p></section>
+<section class="parte"><h1>Para o gestor</h1></section>
 
 <div class="passo">
   <h2>1. Entrar no painel</h2>
@@ -178,33 +132,26 @@ code {
 
 <div class="passo">
   <h2>2. Dashboard</h2>
-  <p>Mostra quem está ao serviço, atrasos e justificações pendentes.</p>
+  <p>Quem está ao serviço, atrasos e justificações pendentes.</p>
   <img class="grande w-painel" src="imagens/painel-dashboard.png" alt="Dashboard">
 </div>
 
 <div class="passo">
   <h2>3. Registar um funcionário</h2>
-  <p><b>Funcionários → Novo funcionário.</b> Nome, email, cargo e horas por semana.</p>
+  <p><b>Funcionários → Novo funcionário.</b></p>
   <img class="grande w-painel" src="imagens/painel-funcionarios.png" alt="Funcionários">
 </div>
 
 <div class="passo">
   <h2>4. Criar o acesso</h2>
-  <p>Clique em <b>Criar acesso</b>. Aparece uma palavra-passe — anote e entregue em mão.</p>
+  <p>Clique em <b>Criar acesso</b> e entregue a palavra-passe em mão.</p>
   <img class="grande w-painel" src="imagens/painel-acesso-criado.png" alt="Acesso criado">
-  <div class="dica">Só é mostrada uma vez. Se perder, o funcionário usa «Esqueci-me da palavra-passe».</div>
 </div>
 
 <div class="passo">
   <h2>5. Definir o horário</h2>
-  <p>Clique em <b>Horário</b>. Um clique num turno preenche de segunda a sábado.</p>
-  <div class="turnos">
-    <div><div class="nome">Manhã</div><div class="horas">06:00–14:00</div></div>
-    <div><div class="nome">Pão</div><div class="horas">11:00–19:00</div></div>
-    <div><div class="nome">Noite</div><div class="horas">18:00–02:00</div></div>
-  </div>
+  <p>Clique em <b>Horário</b> e escolha o turno: Manhã (06:00–14:00), Pão (11:00–19:00) ou Noite (18:00–02:00).</p>
   <img class="grande w-painel" src="imagens/painel-turnos.png" alt="Turnos">
-  <div class="dica"><b>Escala 6x2:</b> em Definições, regime «Rotativo» — o dia sem ponto passa a ser folga, não falta.</div>
 </div>
 
 <div class="passo">
@@ -215,7 +162,7 @@ code {
 
 <div class="passo">
   <h2>7. Registos</h2>
-  <p>Vê tudo o que foi marcado, com filtros por pessoa, tipo e data.</p>
+  <p>Tudo o que foi marcado, com filtros por pessoa, tipo e data.</p>
   <img class="grande w-painel" src="imagens/painel-registos.png" alt="Registos">
 </div>
 
@@ -227,7 +174,7 @@ code {
 
 <div class="passo">
   <h2>9. Banco de horas</h2>
-  <p>Crédito, dívida e saldo de cada pessoa. No início do mês, clique em <b>Fechar período</b>.</p>
+  <p>No início do mês, clique em <b>Fechar período</b>.</p>
   <img class="grande w-painel" src="imagens/painel-banco-horas.png" alt="Banco de horas">
 </div>
 
@@ -239,34 +186,8 @@ code {
 
 <div class="passo">
   <h2>11. Definições</h2>
-  <p>Morada, raio do GPS, métodos de registo, regime de folgas e banco de horas.</p>
+  <p>Morada, raio do GPS, métodos de registo e regime de folgas.</p>
   <img class="grande w-painel" src="imagens/painel-definicoes.png" alt="Definições">
-</div>
-
-<!-- ============================ PARTE 3 ============================= -->
-<section class="parte"><h1>Perguntas rápidas</h1><p></p></section>
-
-<div class="passo">
-  <p><b>O QR não lê.</b> Limpe a lente ou acenda a luz. Se não resultar, use o GPS.</p>
-</div>
-<div class="passo">
-  <p><b>Diz que estou fora do raio.</b> Bata ponto na mesma e escreva a justificação — dentro de edifícios o GPS erra.</p>
-</div>
-<div class="passo">
-  <p><b>Trabalho à noite, as horas contam bem?</b> Sim — 18:00 às 02:00 conta sempre 8 horas.</p>
-</div>
-<div class="passo">
-  <p><b>Não bati ponto ontem, era o meu dia de folga.</b> Não conta como falta — a folga é o próprio dia sem ponto.</p>
-</div>
-<div class="passo">
-  <p><b>Um funcionário saiu da casa.</b> Em Funcionários, clique em <b>Desactivar</b>.</p>
-</div>
-
-<div class="passo">
-  <h2>Por fazer, uma vez só</h2>
-  <p>1. Mudar a sua palavra-passe de gestor.</p>
-  <p>2. No Supabase, apagar a chave <code>claudinho</code> e o token <code>claude-setup-salinas</code> — só serviram para instalar o projecto.</p>
-  <p>3. Pedir a cada funcionário para mudar a palavra-passe na primeira entrada.</p>
 </div>
 
 </body>
