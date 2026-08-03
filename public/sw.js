@@ -11,7 +11,7 @@
    - Supabase e qualquer outro pedido não-GET: sempre rede, nunca cache.
    ===================================================================== */
 
-const VERSAO = 'salinas-v1';
+const VERSAO = 'salinas-v2';
 const CACHE_SHELL = `${VERSAO}-shell`;
 
 const SHELL = [
@@ -29,6 +29,7 @@ const SHELL = [
   'js/ecrans/historico.js',
   'js/ecrans/faltas.js',
   'js/ecrans/perfil.js',
+  'assets/logo.png',
   'assets/icone-192.png',
   'assets/icone-512.png',
   'assets/apple-touch-icon.png',

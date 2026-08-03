@@ -21,7 +21,7 @@ echo "→ A recriar a base de dados '${BASE_DADOS}'…"
 psql -q -d postgres -c "drop database if exists ${BASE_DADOS}" >/dev/null
 psql -q -d postgres -c "create database ${BASE_DADOS}" >/dev/null
 
-for ficheiro in 00_stubs_teste 01_schema 02_rls 03_functions 04_storage; do
+for ficheiro in 00_stubs_teste 01_schema 02_rls 03_functions 04_storage 06_banco_horas; do
   echo "→ ${ficheiro}.sql"
   psql -q -v ON_ERROR_STOP=1 -d "${BASE_DADOS}" \
        -f "${RAIZ}/supabase/${ficheiro}.sql" 2>&1 \
@@ -29,5 +29,7 @@ for ficheiro in 00_stubs_teste 01_schema 02_rls 03_functions 04_storage; do
     | grep -v 'already exists, skipping' || true
 done
 
-echo "→ testes.sql"
-psql -v ON_ERROR_STOP=1 -d "${BASE_DADOS}" -f "${RAIZ}/supabase/testes/testes.sql"
+for suite in testes testes_banco_horas; do
+  echo "→ testes/${suite}.sql"
+  psql -v ON_ERROR_STOP=1 -d "${BASE_DADOS}" -f "${RAIZ}/supabase/testes/${suite}.sql"
+done

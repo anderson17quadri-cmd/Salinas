@@ -66,7 +66,7 @@ export default async function renderRelatorio(container, ctx) {
 
     descarregarCsv(
       `salinas-relatorio-${dados.ano}-${String(dados.mes).padStart(2, '0')}.csv`,
-      ['Funcionário', 'Email', 'Cargo', 'Horas trabalhadas', 'Horas esperadas', 'Saldo', 'Dias com entrada', 'Faltas justificadas', 'Faltas pendentes'],
+      ['Funcionário', 'Email', 'Cargo', 'Horas trabalhadas', 'Horas esperadas', 'Saldo do mês', 'Banco de horas acumulado', 'Dias com entrada', 'Faltas sem justificação', 'Faltas justificadas', 'Faltas pendentes'],
       dados.linhas.map((l) => [
         l.nome,
         l.email,
@@ -74,7 +74,9 @@ export default async function renderRelatorio(container, ctx) {
         formatarNumero(l.horas_trabalhadas),
         formatarNumero(l.horas_esperadas),
         formatarNumero(l.saldo_horas),
+        formatarNumero(l.saldo_banco_horas),
         l.dias_com_entrada,
+        l.dias_sem_registo_nem_justificacao,
         l.faltas_justificadas,
         l.faltas_pendentes,
       ])
@@ -105,7 +107,13 @@ function corpo(dados, ctx) {
         <div class="metrica-valor" style="color:${saldoTotal < 0 ? 'var(--erro)' : 'var(--sucesso)'}">
           ${duracao(saldoTotal)}
         </div>
-        <div class="metrica-rotulo">Saldo</div>
+        <div class="metrica-rotulo">Saldo do mês</div>
+      </div>
+      <div class="metrica">
+        <div class="metrica-valor" style="color:${Number(dados.total_saldo_banco_horas) < 0 ? 'var(--erro)' : 'var(--sucesso)'}">
+          ${duracao(dados.total_saldo_banco_horas)}
+        </div>
+        <div class="metrica-rotulo">Banco de horas acumulado</div>
       </div>
     </div>
 
@@ -119,7 +127,8 @@ function corpo(dados, ctx) {
             <th class="numero">Esperado</th>
             <th class="numero">Saldo</th>
             <th class="numero">Dias</th>
-            <th class="numero">Faltas just.</th>
+            <th class="numero">Faltas s/ just.</th>
+            <th class="numero">Banco de horas</th>
           </tr>
         </thead>
         <tbody>
@@ -133,7 +142,12 @@ function corpo(dados, ctx) {
                 ${duracao(l.saldo_horas)}
               </td>
               <td class="numero">${l.dias_com_entrada}</td>
-              <td class="numero">${l.faltas_justificadas}${l.faltas_pendentes > 0 ? ` <span class="etiqueta etiqueta-pausa">${l.faltas_pendentes} pend.</span>` : ''}</td>
+              <td class="numero" style="${l.dias_sem_registo_nem_justificacao > 0 ? 'color:var(--erro);font-weight:700' : ''}">
+                ${l.dias_sem_registo_nem_justificacao || '—'}${l.faltas_pendentes > 0 ? ` <span class="etiqueta etiqueta-pausa">${l.faltas_pendentes} pend.</span>` : ''}
+              </td>
+              <td class="numero" style="color:${Number(l.saldo_banco_horas) < 0 ? 'var(--erro)' : 'var(--sucesso)'}">
+                ${duracao(l.saldo_banco_horas)}
+              </td>
             </tr>
           `).join('') || '<tr><td colspan="7" class="vazio">Sem funcionários.</td></tr>'}
         </tbody>
@@ -144,6 +158,11 @@ function corpo(dados, ctx) {
       As horas esperadas vêm do horário definido por funcionário. Quando não há
       horário, estimam-se a partir das horas semanais do contrato. Os intervalos
       de pausa não contam como tempo de trabalho.
+      <br />
+      O <strong>saldo do mês</strong> é a diferença deste mês; o
+      <strong>banco de horas</strong> é o acumulado ainda em aberto, de todos os
+      períodos. Um saldo negativo é dívida de horas, não é falta — as faltas são
+      contadas à parte, quando não há registo nem justificação num dia com horário.
     </p>
   `;
 }

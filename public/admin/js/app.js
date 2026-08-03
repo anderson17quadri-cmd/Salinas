@@ -15,6 +15,7 @@ import {
 import { guardarConfig, limparConfig, obterConfig } from './config.js';
 import { fecharModal, notificar } from './ui.js';
 
+import renderBancoHoras from './vistas/banco-horas.js';
 import renderDashboard from './vistas/dashboard.js';
 import renderDefinicoes from './vistas/definicoes.js';
 import renderFuncionarios from './vistas/funcionarios.js';
@@ -29,6 +30,7 @@ const VISTAS = {
   registos: renderRegistos,
   qrcode: renderQrCode,
   justificacoes: renderJustificacoes,
+  'banco-horas': renderBancoHoras,
   relatorio: renderRelatorio,
   definicoes: renderDefinicoes,
 };

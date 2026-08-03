@@ -62,6 +62,7 @@ alter table admins               enable row level security;
 alter table registos_ponto       enable row level security;
 alter table horarios_esperados   enable row level security;
 alter table faltas_justificacoes enable row level security;
+alter table banco_horas_movimentos enable row level security;
 
 -- =====================================================================
 -- EMPRESAS
@@ -83,11 +84,13 @@ revoke all on empresas from authenticated, anon;
 grant select (
   id, nome, morada, latitude, longitude, raio_metros,
   metodo_qrcode_ativo, metodo_gps_ativo, foto_obrigatoria,
-  timezone, qr_token_atualizado_em, created_at
+  timezone, qr_token_atualizado_em, created_at,
+  politica_banco_horas, limite_compensacao_meses
 ) on empresas to authenticated;
 grant update (
   nome, morada, latitude, longitude, raio_metros,
-  metodo_qrcode_ativo, metodo_gps_ativo, foto_obrigatoria, timezone
+  metodo_qrcode_ativo, metodo_gps_ativo, foto_obrigatoria, timezone,
+  politica_banco_horas, limite_compensacao_meses
 ) on empresas to authenticated;
 
 -- =====================================================================
@@ -227,3 +230,25 @@ create policy faltas_insert_proprio on faltas_justificacoes
 revoke all on faltas_justificacoes from authenticated, anon;
 grant select on faltas_justificacoes to authenticated;
 grant insert (funcionario_id, data, motivo, status, anexo_url) on faltas_justificacoes to authenticated;
+
+-- =====================================================================
+-- BANCO DE HORAS
+-- =====================================================================
+drop policy if exists banco_horas_select on banco_horas_movimentos;
+create policy banco_horas_select on banco_horas_movimentos
+  for select to authenticated
+  using (
+    funcionario_id = auth_funcionario_id()
+    or exists (
+      select 1 from funcionarios f
+      where f.id = banco_horas_movimentos.funcionario_id
+        and f.empresa_id = auth_empresa_id()
+        and auth_is_admin()
+    )
+  );
+
+-- Só de leitura pela API. Fechar períodos, compensar e pagar passa pelos
+-- RPC de 06_banco_horas.sql, que recalculam o saldo acumulado — deixar
+-- escrever à mão aqui daria saldos que não batem certo com o histórico.
+revoke all on banco_horas_movimentos from authenticated, anon;
+grant select on banco_horas_movimentos to authenticated;

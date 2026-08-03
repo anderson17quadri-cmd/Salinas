@@ -79,13 +79,40 @@ export async function contextoAdmin() {
 
   const { data: empresa, error: erroEmpresa } = await supabase()
     .from('empresas')
-    .select('id, nome, morada, latitude, longitude, raio_metros, metodo_qrcode_ativo, metodo_gps_ativo, foto_obrigatoria, timezone, qr_token_atualizado_em')
+    .select('id, nome, morada, latitude, longitude, raio_metros, metodo_qrcode_ativo, metodo_gps_ativo, foto_obrigatoria, timezone, qr_token_atualizado_em, politica_banco_horas, limite_compensacao_meses')
     .eq('id', admin.empresa_id)
     .single();
   if (erroEmpresa) throw erroEmpresa;
 
   return { admin, empresa };
 }
+
+// ---------------------------------------------------------------------
+// Banco de horas
+// ---------------------------------------------------------------------
+export const bancoHoras = () => rpc('admin_banco_horas');
+
+export const movimentosBancoHoras = (funcionarioId) =>
+  rpc('admin_movimentos_banco_horas', { p_funcionario_id: funcionarioId });
+
+export const fecharPeriodoBancoHoras = (ano, mes) =>
+  rpc('admin_fechar_periodo_banco_horas', { p_ano: ano, p_mes: mes });
+
+export const registarMovimentoBancoHoras = ({ funcionarioId, saldo, estado, observacao, periodo }) =>
+  rpc('admin_registar_movimento_banco_horas', {
+    p_funcionario_id: funcionarioId,
+    p_saldo: saldo,
+    p_status: estado ?? 'aberto',
+    p_observacao: observacao ?? null,
+    p_periodo_referencia: periodo ?? null,
+  });
+
+export const liquidarMovimentoBancoHoras = (id, estado, observacao) =>
+  rpc('admin_liquidar_movimento_banco_horas', {
+    p_movimento_id: id,
+    p_status: estado,
+    p_observacao: observacao ?? null,
+  });
 
 export async function actualizarEmpresa(empresaId, campos) {
   const { error } = await supabase().from('empresas').update(campos).eq('id', empresaId);

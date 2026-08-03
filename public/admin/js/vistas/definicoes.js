@@ -48,6 +48,36 @@ export default async function renderDefinicoes(container, ctx) {
           </select>
         </label>
 
+        <h3 style="margin-top:8px">Banco de horas</h3>
+
+        <label>Política
+          <select name="politica_banco_horas">
+            <option value="apenas_reportar" ${e.politica_banco_horas === 'apenas_reportar' ? 'selected' : ''}>
+              Apenas reportar — o saldo é só informativo
+            </option>
+            <option value="compensar_folga" ${e.politica_banco_horas === 'compensar_folga' ? 'selected' : ''}>
+              Compensar com folga — o crédito vira dias de folga
+            </option>
+            <option value="desconto_automatico" ${e.politica_banco_horas === 'desconto_automatico' ? 'selected' : ''}>
+              Descontar no salário — a dívida é descontada
+            </option>
+            <option value="pagar_extra" ${e.politica_banco_horas === 'pagar_extra' ? 'selected' : ''}>
+              Pagar como horas extra — o crédito é pago
+            </option>
+          </select>
+        </label>
+
+        <label>Limite de compensação (meses)
+          <input type="number" name="limite_compensacao_meses" min="1" max="60"
+                 value="${e.limite_compensacao_meses ?? 12}" />
+        </label>
+
+        <p class="nota">
+          Passado este prazo, os saldos ainda em aberto ficam assinalados no
+          Banco de Horas para decisão. Em Portugal o prazo de compensação vai
+          tipicamente até 12 meses.
+        </p>
+
         <h3 style="margin-top:8px">Métodos de registo</h3>
 
         <label style="font-weight:400">
@@ -121,6 +151,8 @@ export default async function renderDefinicoes(container, ctx) {
       longitude,
       raio_metros: Number(form.raio_metros.value) || 100,
       timezone: form.timezone.value,
+      politica_banco_horas: form.politica_banco_horas.value,
+      limite_compensacao_meses: Number(form.limite_compensacao_meses.value) || 12,
       metodo_qrcode_ativo: qr,
       metodo_gps_ativo: gps,
       foto_obrigatoria: form.foto_obrigatoria.checked,

@@ -109,6 +109,11 @@ export async function listarRegistos({ de, ate, tipo }) {
 }
 
 // ---------------------------------------------------------------------
+// Banco de horas
+// ---------------------------------------------------------------------
+export const meuBancoHoras = () => rpc('meu_banco_horas');
+
+// ---------------------------------------------------------------------
 // Perfil e horário
 // ---------------------------------------------------------------------
 export async function obterHorario(funcionarioId) {

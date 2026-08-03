@@ -25,6 +25,13 @@ create table if not exists empresas (
   foto_obrigatoria boolean not null default false,
   timezone text not null default 'Europe/Lisbon',
   qr_token_atualizado_em timestamptz default now(),
+  -- Política de banco de horas (ver 06_banco_horas.sql)
+  politica_banco_horas text not null default 'apenas_reportar'
+    check (politica_banco_horas in
+      ('apenas_reportar','compensar_folga','desconto_automatico','pagar_extra')),
+  -- Em Portugal o prazo de compensação vai tipicamente até 12 meses.
+  limite_compensacao_meses integer not null default 12
+    check (limite_compensacao_meses between 1 and 60),
   created_at timestamptz default now()
 );
 
@@ -44,6 +51,10 @@ create table if not exists funcionarios (
   cargo text,
   foto_perfil_url text,
   horas_semanais_esperadas numeric default 40 check (horas_semanais_esperadas >= 0),
+  -- Saldo acumulado do banco de horas, em horas decimais. Nunca é escrito
+  -- à mão: é sempre recalculado a partir de banco_horas_movimentos pela
+  -- função _recalcular_saldo_banco_horas() (06_banco_horas.sql).
+  saldo_banco_horas numeric not null default 0,
   ativo boolean default true,
   created_at timestamptz default now()
 );
@@ -121,6 +132,42 @@ create table if not exists faltas_justificacoes (
 );
 
 create index if not exists idx_faltas_funcionario on faltas_justificacoes(funcionario_id, data desc);
+
+-- ---------------------------------------------------------------------
+-- Banco de horas — movimentos por período
+-- ---------------------------------------------------------------------
+-- Conta corrente de horas: cada linha fecha um período (normalmente um
+-- mês) e guarda o que foi trabalhado, o que era esperado e a diferença.
+--
+-- Enquanto o `status` é 'aberto', o saldo conta para o acumulado do
+-- funcionário. Passar a 'compensado', 'pago' ou 'descontado' liquida o
+-- movimento e tira-o do acumulado, deixando o histórico intacto.
+create table if not exists banco_horas_movimentos (
+  id uuid primary key default gen_random_uuid(),
+  funcionario_id uuid references funcionarios(id) on delete cascade,
+  -- Primeiro dia do período a que o movimento se refere
+  periodo_referencia date not null,
+  horas_trabalhadas numeric not null,
+  horas_esperadas numeric not null,
+  -- horas_trabalhadas - horas_esperadas (negativo = dívida de horas)
+  saldo numeric not null,
+  status text check (status in ('aberto','compensado','pago','descontado')) default 'aberto',
+  observacao text,
+  -- Movimentos manuais (compensações, pagamentos) não vêm do fecho do mês
+  -- e por isso não são substituídos quando um período é refechado.
+  manual boolean not null default false,
+  revisto_por uuid references auth.users(id) on delete set null,
+  created_at timestamptz default now()
+);
+
+-- Um único movimento automático por funcionário e período; os manuais
+-- podem ser vários (várias compensações no mesmo mês).
+create unique index if not exists idx_banco_horas_periodo_automatico
+  on banco_horas_movimentos (funcionario_id, periodo_referencia)
+  where manual is false;
+
+create index if not exists idx_banco_horas_funcionario
+  on banco_horas_movimentos (funcionario_id, periodo_referencia desc);
 
 -- ---------------------------------------------------------------------
 -- Trigger: preenche empresa_id do registo a partir do funcionário

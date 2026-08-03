@@ -685,6 +685,120 @@ end;
 $$;
 
 -- =====================================================================
+-- CÁLCULO DE HORAS DE UM PERÍODO
+-- =====================================================================
+-- Fonte única de verdade para "quantas horas é que esta pessoa fez".
+-- É usada pelo relatório mensal e pelo fecho do banco de horas, para que
+-- os dois nunca possam divergir.
+--
+-- Tempo de trabalho = intervalos que começam numa 'entrada' ou num
+-- 'fim_pausa' e terminam no evento seguinte. As pausas ficam de fora.
+create or replace function _horas_do_periodo(
+  p_empresa_id uuid,
+  p_inicio date,
+  p_fim date,          -- exclusivo
+  p_tz text
+)
+returns table (
+  funcionario_id uuid,
+  horas_trabalhadas numeric,
+  horas_esperadas numeric,
+  dias_com_entrada integer,
+  dias_sem_registo_nem_justificacao integer
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  with func as (
+    select * from funcionarios where empresa_id = p_empresa_id
+  ),
+  ord as (
+    select
+      r.funcionario_id,
+      r.tipo,
+      r."timestamp",
+      lead(r."timestamp") over (
+        partition by r.funcionario_id order by r."timestamp"
+      ) as proximo
+    from registos_ponto r
+    join func f on f.id = r.funcionario_id
+    where (r."timestamp" at time zone p_tz)::date >= p_inicio
+      and (r."timestamp" at time zone p_tz)::date <  p_fim
+  ),
+  trabalhado as (
+    select o.funcionario_id, sum(extract(epoch from (o.proximo - o."timestamp")) / 3600.0) as horas
+    from ord o
+    where o.tipo in ('entrada','fim_pausa') and o.proximo is not null
+    group by o.funcionario_id
+  ),
+  entradas as (
+    select o.funcionario_id, count(*)::int as dias
+    from ord o
+    where o.tipo = 'entrada'
+    group by o.funcionario_id
+  ),
+  dias as (
+    select d::date as dia, extract(dow from d)::int as dow
+    from generate_series(p_inicio, p_fim - 1, interval '1 day') d
+  ),
+  -- Um dia esperado por cada dia do período em que o funcionário tem
+  -- horário definido para aquele dia da semana.
+  esperado_dia as (
+    select
+      h.funcionario_id,
+      dias.dia,
+      extract(epoch from (h.hora_saida - h.hora_entrada)) / 3600.0 as horas
+    from dias
+    join horarios_esperados h on h.dia_semana = dias.dow
+    join func f on f.id = h.funcionario_id
+    where h.hora_entrada is not null and h.hora_saida is not null
+  ),
+  esperado as (
+    select e.funcionario_id, sum(e.horas) as horas
+    from esperado_dia e
+    group by e.funcionario_id
+  ),
+  -- Falta a sério: dia com horário, sem qualquer registo, e sem pedido
+  -- de justificação por decidir ou aprovado. Um saldo negativo por si só
+  -- não é falta — é apenas dívida de horas.
+  faltas as (
+    select e.funcionario_id, count(*)::int as dias
+    from esperado_dia e
+    where not exists (
+      select 1 from registos_ponto r
+      where r.funcionario_id = e.funcionario_id
+        and (r."timestamp" at time zone p_tz)::date = e.dia
+    )
+    and not exists (
+      select 1 from faltas_justificacoes j
+      where j.funcionario_id = e.funcionario_id
+        and j.data = e.dia
+        and j.status <> 'rejeitado'
+    )
+    group by e.funcionario_id
+  )
+  select
+    f.id,
+    round(coalesce(t.horas, 0)::numeric, 2),
+    round(coalesce(
+      e.horas,
+      -- Sem horário definido, estima-se a partir das horas semanais.
+      f.horas_semanais_esperadas * ((p_fim - p_inicio) / 7.0)
+    )::numeric, 2),
+    coalesce(en.dias, 0),
+    coalesce(fa.dias, 0)
+  from func f
+  left join trabalhado t on t.funcionario_id = f.id
+  left join esperado e   on e.funcionario_id = f.id
+  left join entradas en  on en.funcionario_id = f.id
+  left join faltas fa    on fa.funcionario_id = f.id;
+$$;
+
+revoke all on function _horas_do_periodo(uuid, date, date, text) from public, anon, authenticated;
+
+-- =====================================================================
 -- ADMIN — RELATÓRIO MENSAL (horas trabalhadas vs. esperadas)
 -- =====================================================================
 create or replace function admin_relatorio_mensal(p_ano int, p_mes int)
@@ -696,6 +810,7 @@ as $$
 declare
   v_empresa_id uuid;
   v_tz text;
+  v_politica text;
   v_inicio date;
   v_fim date;
   v_resultado jsonb;
@@ -709,58 +824,24 @@ begin
   end if;
 
   v_empresa_id := auth_empresa_id();
-  select timezone into v_tz from empresas where id = v_empresa_id;
+  select timezone, politica_banco_horas into v_tz, v_politica
+  from empresas where id = v_empresa_id;
 
   v_inicio := make_date(p_ano, p_mes, 1);
   v_fim := (v_inicio + interval '1 month')::date;
 
-  with func as (
-    select * from funcionarios where empresa_id = v_empresa_id
-  ),
-  -- Registos do mês em hora local, com o evento seguinte de cada funcionário
-  ord as (
-    select
-      r.funcionario_id,
-      r.tipo,
-      r."timestamp",
-      lead(r."timestamp") over (
-        partition by r.funcionario_id order by r."timestamp"
-      ) as proximo
-    from registos_ponto r
-    join func f on f.id = r.funcionario_id
-    where (r."timestamp" at time zone v_tz)::date >= v_inicio
-      and (r."timestamp" at time zone v_tz)::date <  v_fim
-  ),
-  -- Tempo de trabalho = intervalos que começam em 'entrada' ou 'fim_pausa'.
-  -- As pausas (inicio_pausa → fim_pausa) ficam de fora.
-  trabalhado as (
-    select funcionario_id,
-           sum(extract(epoch from (proximo - "timestamp"))) / 3600.0 as horas
-    from ord
-    where tipo in ('entrada','fim_pausa') and proximo is not null
-    group by funcionario_id
-  ),
-  -- Dias do mês, para contar quantas vezes cada dia da semana ocorre
-  dias as (
-    select d::date as dia, extract(dow from d)::int as dow
-    from generate_series(v_inicio, v_fim - 1, interval '1 day') d
-  ),
-  esperado as (
-    select h.funcionario_id,
-           sum(extract(epoch from (h.hora_saida - h.hora_entrada)) / 3600.0) as horas
-    from dias
-    join horarios_esperados h on h.dia_semana = dias.dow
-    join func f on f.id = h.funcionario_id
-    where h.hora_entrada is not null and h.hora_saida is not null
-    group by h.funcionario_id
+  with horas as (
+    select * from _horas_do_periodo(v_empresa_id, v_inicio, v_fim, v_tz)
   ),
   faltas as (
-    select funcionario_id,
-           count(*) filter (where status = 'aprovado') as justificadas,
-           count(*) filter (where status = 'pendente') as pendentes
-    from faltas_justificacoes
-    where data >= v_inicio and data < v_fim
-    group by funcionario_id
+    select j.funcionario_id,
+           count(*) filter (where j.status = 'aprovado') as justificadas,
+           count(*) filter (where j.status = 'pendente') as pendentes
+    from faltas_justificacoes j
+    join funcionarios f on f.id = j.funcionario_id
+    where f.empresa_id = v_empresa_id
+      and j.data >= v_inicio and j.data < v_fim
+    group by j.funcionario_id
   ),
   linhas as (
     select
@@ -769,23 +850,17 @@ begin
       f.email,
       f.cargo,
       f.ativo,
-      round(coalesce(t.horas, 0)::numeric, 2) as horas_trabalhadas,
-      round(coalesce(
-        e.horas,
-        -- Sem horário definido, estima-se a partir das horas semanais
-        f.horas_semanais_esperadas * ((v_fim - v_inicio) / 7.0)
-      )::numeric, 2) as horas_esperadas,
-      round((coalesce(t.horas, 0) - coalesce(
-        e.horas,
-        f.horas_semanais_esperadas * ((v_fim - v_inicio) / 7.0)
-      ))::numeric, 2) as saldo_horas,
+      h.horas_trabalhadas,
+      h.horas_esperadas,
+      round((h.horas_trabalhadas - h.horas_esperadas)::numeric, 2) as saldo_horas,
+      h.dias_com_entrada,
+      h.dias_sem_registo_nem_justificacao,
       coalesce(fa.justificadas, 0) as faltas_justificadas,
       coalesce(fa.pendentes, 0) as faltas_pendentes,
-      (select count(*) from ord o
-        where o.funcionario_id = f.id and o.tipo = 'entrada') as dias_com_entrada
-    from func f
-    left join trabalhado t on t.funcionario_id = f.id
-    left join esperado e on e.funcionario_id = f.id
+      -- Saldo acumulado do banco de horas, para lá deste mês
+      round(f.saldo_banco_horas::numeric, 2) as saldo_banco_horas
+    from funcionarios f
+    join horas h on h.funcionario_id = f.id
     left join faltas fa on fa.funcionario_id = f.id
   )
   select jsonb_build_object(
@@ -794,8 +869,10 @@ begin
     'inicio', v_inicio,
     'fim', v_fim - 1,
     'timezone', v_tz,
+    'politica_banco_horas', v_politica,
     'total_horas_trabalhadas', (select round(coalesce(sum(horas_trabalhadas),0), 2) from linhas),
     'total_horas_esperadas', (select round(coalesce(sum(horas_esperadas),0), 2) from linhas),
+    'total_saldo_banco_horas', (select round(coalesce(sum(saldo_banco_horas),0), 2) from linhas),
     'linhas', coalesce((select jsonb_agg(to_jsonb(l) order by l.nome) from linhas l), '[]'::jsonb)
   ) into v_resultado;
 

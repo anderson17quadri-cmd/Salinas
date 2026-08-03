@@ -189,6 +189,16 @@ export function mostrarSucesso(resultado) {
   });
 }
 
+/** Horas decimais em "8h30", com sinal quando é negativo. */
+export function duracao(horasDecimais) {
+  if (horasDecimais == null) return '—';
+  const total = Math.round(Number(horasDecimais) * 60);
+  const sinal = total < 0 ? '−' : total > 0 ? '+' : '';
+  const h = Math.floor(Math.abs(total) / 60);
+  const m = Math.abs(total) % 60;
+  return `${sinal}${h}h${String(m).padStart(2, '0')}`;
+}
+
 export function formatarDistancia(metros) {
   if (metros == null) return '—';
   if (metros < 1000) return `${Math.round(metros)} m`;

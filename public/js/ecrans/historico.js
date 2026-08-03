@@ -1,10 +1,11 @@
-import { estadoAtual, listarRegistos, mensagemDeErro } from '../api.js';
+import { estadoAtual, listarRegistos, mensagemDeErro, meuBancoHoras } from '../api.js';
 import {
   MESES,
   ROTULOS_METODO,
   ROTULOS_TIPO,
   chaveDia,
   dataExtenso,
+  duracao,
   esc,
   formatarDistancia,
   horas,
@@ -35,6 +36,8 @@ export default async function renderHistorico(container, ctx) {
       </div>
     </div>
 
+    <div id="banco-horas"></div>
+
     <div class="chips" id="chips">
       ${FILTROS.map((f) => `
         <button type="button" class="chip ${filtros.tipo === f.valor ? 'activo' : ''}"
@@ -46,6 +49,7 @@ export default async function renderHistorico(container, ctx) {
   `;
 
   const lista = container.querySelector('#lista');
+  desenharBancoHoras(container.querySelector('#banco-horas'));
   const rotuloMes = container.querySelector('#mes-rotulo');
   const seguinte = container.querySelector('#mes-seguinte');
 
@@ -92,6 +96,47 @@ export default async function renderHistorico(container, ctx) {
   }
 
   await carregar();
+}
+
+/**
+ * Saldo do banco de horas em destaque: verde quando está positivo,
+ * vermelho quando está negativo.
+ *
+ * É carregado à parte da lista para que uma falha aqui não impeça o
+ * funcionário de ver os seus registos.
+ */
+async function desenharBancoHoras(alvo) {
+  try {
+    const banco = await meuBancoHoras();
+    const saldo = Number(banco.saldo);
+
+    if (!saldo && !(banco.movimentos ?? []).length) {
+      alvo.innerHTML = '';
+      return;
+    }
+
+    const negativo = saldo < 0;
+    const cor = negativo ? 'var(--erro)' : saldo > 0 ? 'var(--sucesso)' : 'var(--texto-suave)';
+
+    alvo.innerHTML = `
+      <div class="cartao banco-cartao">
+        <div>
+          <div class="banco-rotulo">Banco de horas</div>
+          <div class="banco-nota">
+            ${esc(negativo
+              ? 'Tem horas em dívida — não é falta, é saldo a repor.'
+              : saldo > 0
+                ? 'Tem horas a seu crédito.'
+                : 'Está em dia.')}
+          </div>
+        </div>
+        <div class="banco-saldo" style="color:${cor}">${duracao(saldo)}</div>
+      </div>
+    `;
+  } catch {
+    // O banco de horas é informativo — se falhar, o histórico continua.
+    alvo.innerHTML = '';
+  }
 }
 
 function desenhar(registos, tz) {

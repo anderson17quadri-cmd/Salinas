@@ -18,7 +18,7 @@ Duas aplicações web sobre um backend Supabase:
 | | O quê | Onde |
 |---|---|---|
 | **App do funcionário** | PWA instalável no telemóvel: bater ponto, ver histórico, justificar faltas | `/` |
-| **Painel de administração** | Dashboard, funcionários, registos, QR code, justificações, relatório mensal | `/admin/` |
+| **Painel de administração** | Dashboard, funcionários, registos, QR code, justificações, banco de horas, relatório mensal | `/admin/` |
 
 A app do funcionário é uma **PWA** — corre no browser e instala-se no ecrã
 principal com "Adicionar ao Ecrã Principal", em Android e em iPhone. Não há
@@ -45,8 +45,9 @@ supabase/          Schema, RLS, RPC functions e testes
   03_functions.sql   RPC SECURITY DEFINER — toda a lógica de negócio
   04_storage.sql     Buckets e policies de ficheiros
   05_seed.sql        Dados de arranque (opcional)
+  06_banco_horas.sql Banco de horas — fecho de períodos, compensações e saldos
   00_stubs_teste.sql Emulação do Supabase para testes locais — NÃO correr em produção
-  testes/            Suite de testes das regras de negócio e do RLS
+  testes/            Suites de testes das regras de negócio e do RLS
 
 public/            Tudo o que vai para o GitHub Pages
   index.html         PWA do funcionário
@@ -75,7 +76,8 @@ supabase/01_schema.sql
 supabase/02_rls.sql
 supabase/03_functions.sql
 supabase/04_storage.sql
-supabase/05_seed.sql      (opcional — dados de exemplo)
+supabase/05_seed.sql        (opcional — dados de exemplo)
+supabase/06_banco_horas.sql
 ```
 
 > `00_stubs_teste.sql` é só para correr o schema num Postgres normal. **Não o
@@ -224,6 +226,79 @@ O relatório mensal conta como trabalho os intervalos que começam numa **entrad
 ou num **fim de pausa** e terminam no evento seguinte. As pausas ficam de fora.
 As horas esperadas vêm do horário definido por funcionário; sem horário,
 estimam-se a partir das horas semanais do contrato.
+
+O relatório e o banco de horas usam a **mesma** função (`_horas_do_periodo`),
+por isso não podem divergir.
+
+---
+
+## Banco de horas
+
+Uma conta corrente de horas por funcionário: a diferença entre o que foi
+trabalhado e o que era esperado, acumulada ao longo dos meses.
+
+- **Saldo positivo** é crédito, disponível para compensação.
+- **Saldo negativo** é dívida de horas — **não é falta**. Uma falta só existe
+  quando não há registo nenhum num dia com horário e não há justificação
+  pendente ou aprovada; essa contagem aparece à parte, no relatório mensal.
+
+### Fechar um período
+
+Em **Banco de Horas → Fechar período**, escolha o mês. Para cada funcionário é
+gravado um movimento com as horas trabalhadas, as esperadas e o saldo.
+
+Refechar o mesmo mês **actualiza** o movimento em vez de duplicar — útil quando
+se corrige um registo depois do fecho. Períodos já pagos ou compensados não são
+tocados: reescrevê-los apagaria uma decisão já tomada, e o painel diz quais
+foram ignorados.
+
+Para automatizar, agende o RPC com [pg_cron](https://supabase.com/docs/guides/database/extensions/pg_cron)
+— por exemplo, no primeiro dia de cada mês:
+
+```sql
+select cron.schedule(
+  'fechar-banco-horas',
+  '0 3 1 * *',
+  $$ select admin_fechar_periodo_banco_horas(
+       extract(year  from now() - interval '1 month')::int,
+       extract(month from now() - interval '1 month')::int
+     ) $$
+);
+```
+
+### Saldo acumulado
+
+`funcionarios.saldo_banco_horas` é sempre **recalculado** a partir dos movimentos
+em aberto, nunca incrementado. Somar deltas dava saldos que, ao fim de alguns
+meses e algumas correcções, deixavam de bater certo com o histórico — e num
+saldo de horas isso é dinheiro.
+
+Liquidar um movimento (**Compensado**, **Pago** ou **Descontado**) tira-o do
+acumulado sem o apagar do histórico. Reabri-lo devolve-o ao saldo.
+
+### Movimentos manuais
+
+**Lançar** regista horas fora do fecho automático: pagar horas extra, dar uma
+folga a partir do crédito, ou corrigir um acerto combinado. O sinal segue a
+mesma convenção — uma folga de 8 h lança-se como `-8`.
+
+### Política da empresa
+
+Em **Definições**:
+
+| Política | O que significa |
+|---|---|
+| `apenas_reportar` | O saldo é só informativo (por omissão) |
+| `compensar_folga` | O crédito pode ser convertido em dias de folga |
+| `desconto_automatico` | A dívida é descontada no relatório de salário |
+| `pagar_extra` | O crédito é sinalizado para pagamento de horas extra |
+
+O **limite de compensação** (12 meses por omissão, como é típico em Portugal)
+faz o painel assinalar os saldos que já ultrapassaram o prazo e têm de ser
+decididos.
+
+O funcionário vê o seu saldo em destaque no ecrã **Histórico** da app — verde
+quando está a crédito, vermelho quando está em dívida.
 
 ---
 

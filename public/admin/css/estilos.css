@@ -219,6 +219,17 @@ h3 { font-size: 15px; margin: 0 0 8px; }
 
 .accoes { display: flex; gap: 8px; flex-wrap: wrap; }
 
+/* `.accoes` serve tanto os cabeçalhos de página como as células de acções
+   das tabelas. Numa célula, o display:flex tira-lhe o comportamento de
+   table-cell e a linha deixa de fechar — daí a reposição. */
+td.accoes {
+  display: table-cell;
+  white-space: nowrap;
+  text-align: right;
+}
+
+td.accoes .botao { vertical-align: middle; }
+
 /* ------------------------------ Métricas --------------------------- */
 .grelha-metricas {
   display: grid;
