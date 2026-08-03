@@ -118,12 +118,12 @@ jobs:
             echo "  configurado: $ficheiro"
           done
 
+      # Ligar o Pages tem de ser feito à mão uma vez, em
+      # Settings → Pages → Source: GitHub Actions. O GITHUB_TOKEN do
+      # workflow não tem permissão para o fazer ("Resource not accessible
+      # by integration"), por isso não vale a pena tentar automatizá-lo.
       - name: Configurar Pages
         uses: actions/configure-pages@v5
-        with:
-          # Liga o GitHub Pages sozinho na primeira publicação, para não
-          # ser preciso ir às definições do repositório à mão.
-          enablement: true
 
       - name: Empacotar site
         uses: actions/upload-pages-artifact@v3
