@@ -147,6 +147,25 @@ jobs:
       # Settings → Pages → Source: GitHub Actions. O GITHUB_TOKEN do
       # workflow não tem permissão para o fazer ("Resource not accessible
       # by integration"), por isso não vale a pena tentar automatizá-lo.
+      - name: Carimbar a versão do service worker
+        run: |
+          # A cache do service worker tem de mudar de nome a cada
+          # publicação, senão os telemóveis que já têm a app instalada
+          # continuam a servir os ficheiros antigos.
+          VERSAO="${GITHUB_SHA::12}"
+          node -e '
+            const fs = require("fs");
+            const caminho = "public/sw.js";
+            const texto = fs.readFileSync(caminho, "utf8");
+            const novo = texto.replace("__VERSAO__", process.argv[1]);
+            if (novo === texto) {
+              console.error("::error::Não encontrei __VERSAO__ em public/sw.js.");
+              process.exit(1);
+            }
+            fs.writeFileSync(caminho, novo);
+          ' "$VERSAO"
+          echo "  service worker carimbado: salinas-$VERSAO"
+
       - name: Configurar Pages
         uses: actions/configure-pages@v5
 

@@ -6,14 +6,27 @@
    exige rede, e um registo guardado em fila que só chegasse ao servidor
    horas depois daria uma hora errada no cartão de ponto.
 
-   Estratégia:
-   - Shell da app (HTML/CSS/JS/ícones): stale-while-revalidate.
-   - Supabase e qualquer outro pedido não-GET: sempre rede, nunca cache.
+   Estratégia: **rede primeiro**, cache só como rede de segurança.
+
+   A versão anterior servia a cache primeiro e actualizava por trás
+   (stale-while-revalidate). Parece boa ideia — abre instantaneamente —
+   mas significa que uma correcção publicada só chega ao telemóvel na
+   utilização *seguinte*. Aconteceu mesmo: mudou-se a configuração da
+   app e os telemóveis que já a tinham instalada continuaram a mostrar a
+   versão antiga.
+
+   Como bater o ponto exige rede de qualquer forma, ir primeiro à rede
+   não custa nada em prática e garante que o que está no telemóvel é o
+   que está publicado. Sem rede, a cache entra e a app pelo menos abre.
 
    Não há pedidos a CDN: as bibliotecas são servidas da mesma origem.
    ===================================================================== */
 
-const VERSAO = 'salinas-v3';
+// Carimbado com o commit em cada publicação (ver .github/workflows/deploy.yml).
+// Sem isto, era preciso lembrar de mudar este número à mão sempre que um
+// ficheiro mudasse — e esquecer uma vez chega para os telemóveis ficarem
+// com a versão antiga guardada.
+const VERSAO = 'salinas-__VERSAO__';
 const CACHE_SHELL = `${VERSAO}-shell`;
 
 const SHELL = [
@@ -75,18 +88,17 @@ self.addEventListener('fetch', (evento) => {
   if (url.origin !== self.location.origin) return;
 
   evento.respondWith(
-    caches.match(request).then((emCache) => {
-      const daRede = fetch(request)
-        .then((resposta) => {
-          if (resposta.ok) {
-            const copia = resposta.clone();
-            caches.open(CACHE_SHELL).then((cache) => cache.put(request, copia));
-          }
-          return resposta;
-        })
-        .catch(() => emCache);
-
-      return emCache || daRede;
-    })
+    fetch(request)
+      .then((resposta) => {
+        if (resposta.ok) {
+          const copia = resposta.clone();
+          caches.open(CACHE_SHELL).then((cache) => cache.put(request, copia));
+        }
+        return resposta;
+      })
+      // Sem rede (ou falha), vale o que estiver guardado.
+      .catch(() => caches.match(request).then((emCache) =>
+        emCache || Response.error()
+      ))
   );
 });
