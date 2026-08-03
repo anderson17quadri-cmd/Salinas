@@ -9,10 +9,10 @@ name: Publicar no GitHub Pages
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'public/**'
-      - '.github/workflows/deploy.yml'
+    # `main` é o destino normal. O ramo de trabalho está aqui porque o
+    # repositório ainda não tem `main` — assim o site vai para o ar sem
+    # esperar pela junção. Pode sair desta lista quando `main` existir.
+    branches: [main, 'claude/**']
   workflow_dispatch:
 
 permissions:
@@ -120,6 +120,10 @@ jobs:
 
       - name: Configurar Pages
         uses: actions/configure-pages@v5
+        with:
+          # Liga o GitHub Pages sozinho na primeira publicação, para não
+          # ser preciso ir às definições do repositório à mão.
+          enablement: true
 
       - name: Empacotar site
         uses: actions/upload-pages-artifact@v3
