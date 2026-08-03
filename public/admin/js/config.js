@@ -36,6 +36,17 @@ export function obterConfig() {
   return null;
 }
 
+/**
+ * Verdadeiro quando a configuração veio embutida no site.
+ *
+ * Nesse caso não há nada para o utilizador configurar, e a opção de mudar
+ * de projecto é escondida: quem só quer bater o ponto não deve sequer
+ * ver o ecrã que pede o URL e a chave.
+ */
+export function configFoiInjectada() {
+  return foiInjectado(INJECTADO.url) && foiInjectado(INJECTADO.chaveAnon);
+}
+
 export function guardarConfig({ url, chaveAnon }) {
   localStorage.setItem(CHAVE_ARMAZENAMENTO, JSON.stringify({ url, chaveAnon }));
 }

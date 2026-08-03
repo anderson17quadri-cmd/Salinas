@@ -4,7 +4,7 @@
 // =====================================================================
 
 import { entrar, mensagemDeErro, recuperarPalavraPasse, reiniciarCliente, sair, sessaoActual } from './api.js';
-import { guardarConfig, limparConfig, obterConfig } from './config.js';
+import { configFoiInjectada, guardarConfig, limparConfig, obterConfig } from './config.js';
 import { notificar, pintarLogo } from './ui.js';
 
 import renderFaltas from './ecrans/faltas.js';
@@ -60,6 +60,11 @@ document.getElementById('form-config').addEventListener('submit', async (e) => {
   reiniciarCliente();
   await arrancar();
 });
+
+// Com a configuração embutida, mudar de projecto não faz sentido nenhum.
+if (configFoiInjectada()) {
+  document.getElementById('mudar-projecto').closest('.nota').classList.add('oculto');
+}
 
 document.getElementById('mudar-projecto').addEventListener('click', () => {
   limparConfig();
