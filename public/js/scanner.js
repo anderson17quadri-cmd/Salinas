@@ -1,4 +1,4 @@
-import { Html5Qrcode } from 'https://esm.sh/html5-qrcode@2.3.8';
+import { Html5Qrcode } from '../vendor/html5-qrcode.js';
 
 import { ROTULOS_TIPO, esc } from './ui.js';
 

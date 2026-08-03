@@ -9,9 +9,11 @@
    Estratégia:
    - Shell da app (HTML/CSS/JS/ícones): stale-while-revalidate.
    - Supabase e qualquer outro pedido não-GET: sempre rede, nunca cache.
+
+   Não há pedidos a CDN: as bibliotecas são servidas da mesma origem.
    ===================================================================== */
 
-const VERSAO = 'salinas-v2';
+const VERSAO = 'salinas-v3';
 const CACHE_SHELL = `${VERSAO}-shell`;
 
 const SHELL = [
@@ -29,6 +31,10 @@ const SHELL = [
   'js/ecrans/historico.js',
   'js/ecrans/faltas.js',
   'js/ecrans/perfil.js',
+  // Bibliotecas empacotadas localmente (ver tools/gerar-vendor.js): sem
+  // elas a app nem arranca, por isso vão para a cache do shell.
+  'vendor/supabase.js',
+  'vendor/html5-qrcode.js',
   'assets/logo.png',
   'assets/icone-192.png',
   'assets/icone-512.png',

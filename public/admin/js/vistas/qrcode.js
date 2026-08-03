@@ -1,4 +1,4 @@
-import QRCode from 'https://esm.sh/qrcode@1.5.4';
+import QRCode from '../../../vendor/qrcode.js';
 
 import { mensagemDeErro, obterQrToken, regenerarQrToken } from '../api.js';
 import { confirmar, dataHora, esc, exportarPdf, notificar } from '../ui.js';

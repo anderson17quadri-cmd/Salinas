@@ -47,6 +47,23 @@ jobs:
             exit 1
           fi
 
+      - name: Confirmar que não há dependências de CDN
+        run: |
+          # As bibliotecas são servidas da mesma origem (public/vendor/).
+          # Um import de CDN que voltasse a entrar significaria que, num dia
+          # em que esse CDN estivesse em baixo, ninguém batia o ponto.
+          if grep -rnE "from ['\"]https://" public/ --include=*.js --include=*.html ; then
+            echo "::error::Há um import externo em public/. Empacote a biblioteca com tools/gerar-vendor.js."
+            exit 1
+          fi
+
+          for ficheiro in vendor/supabase.js vendor/html5-qrcode.js vendor/qrcode.js; do
+            if [ ! -s "public/$ficheiro" ]; then
+              echo "::error::Falta public/$ficheiro. Corra: cd tools && npm install && node gerar-vendor.js"
+              exit 1
+            fi
+          done
+
       - name: Injectar configuração do Supabase
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

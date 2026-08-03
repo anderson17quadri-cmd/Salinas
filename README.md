@@ -55,12 +55,39 @@ public/            Tudo o que vai para o GitHub Pages
   sw.js              Service worker
   assets/            Logo e ícones
   css/ js/           Estilos e código da PWA
+  vendor/            Bibliotecas de terceiros, empacotadas (ver abaixo)
   admin/             Painel de administração (HTML + JS puro)
 
 tools/             Utilitários Node
   gerar-qrcode.js    Cartaz A4 com o QR code da empresa
   gerar-icones.js    Ícones da PWA a partir do logo
+  gerar-vendor.js    Empacota as bibliotecas para public/vendor/
 ```
+
+### Bibliotecas de terceiros
+
+A Salinas não vai buscar nada a um CDN. As três bibliotecas que usa —
+`@supabase/supabase-js`, `html5-qrcode` e `qrcode` — estão empacotadas em
+`public/vendor/` e são servidas do mesmo sítio que o resto da app.
+
+É uma decisão deliberada: um registo de ponto é usado todas as manhãs, e se um
+CDN estiver em baixo ninguém consegue bater o ponto — sem que haja nada a fazer
+nesse momento. Servidas da mesma origem, as bibliotecas entram também no service
+worker (a app abre com rede fraca) e deixa de haver pedidos a terceiros a partir
+do telemóvel dos funcionários.
+
+Os ficheiros são versionados de propósito: quem clonar o repositório publica sem
+qualquer passo de build. Para actualizar uma versão:
+
+```bash
+cd tools
+# mude a versão em package.json
+npm install
+node gerar-vendor.js
+```
+
+O workflow de deploy recusa publicar se algum `import` externo voltar a aparecer
+ou se faltar um dos ficheiros de `public/vendor/`.
 
 ---
 

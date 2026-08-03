@@ -6,10 +6,16 @@
   "description": "Utilitários de linha de comandos para a Salinas.",
   "scripts": {
     "qrcode": "node gerar-qrcode.js",
-    "icones": "node gerar-icones.js"
+    "icones": "node gerar-icones.js",
+    "vendor": "node gerar-vendor.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.45.4",
+    "html5-qrcode": "2.3.8",
     "qrcode": "^1.5.4",
     "sharp": "^0.33.5"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
   }
 }
