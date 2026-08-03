@@ -185,6 +185,12 @@ begin
 end;
 $$;
 
+-- O Postgres dá EXECUTE ao público por omissão. Uma função de trigger não
+-- é chamável directamente, mas deixar a permissão aberta faz com que, no
+-- dia em que alguém a converta em função normal, ela fique exposta sem
+-- ninguém reparar.
+revoke all on function trg_registos_empresa_id() from public, anon, authenticated;
+
 drop trigger if exists set_empresa_id on registos_ponto;
 create trigger set_empresa_id
   before insert or update of funcionario_id on registos_ponto
@@ -214,6 +220,10 @@ begin
   return new;
 end;
 $$;
+
+-- Esta é SECURITY DEFINER: corre com os privilégios do dono. Fechar a
+-- permissão é defesa em profundidade.
+revoke all on function trg_ligar_conta_auth() from public, anon, authenticated;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
