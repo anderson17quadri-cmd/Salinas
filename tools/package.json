@@ -5,9 +5,11 @@
   "type": "module",
   "description": "Utilitários de linha de comandos para a Salinas.",
   "scripts": {
-    "qrcode": "node gerar-qrcode.js"
+    "qrcode": "node gerar-qrcode.js",
+    "icones": "node gerar-icones.js"
   },
   "dependencies": {
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "sharp": "^0.33.5"
   }
 }

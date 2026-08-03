@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <title>Salinas — Registo de Ponto</title>
+  <meta name="description" content="Bata o ponto por QR code ou geolocalização." />
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#F5A323" />
+
+  <!-- iOS: "Adicionar ao Ecrã Principal" -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Salinas" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <link rel="icon" href="assets/icone-192.png" />
+
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+
+<!-- ===================== Splash / arranque ======================= -->
+<div id="ecra-splash" class="ecra-marca">
+  <div class="marca-bloco">
+    <div class="marca-logo" id="splash-logo"></div>
+    <p class="marca-estado">A carregar…</p>
+  </div>
+</div>
+
+<!-- ===================== Configuração inicial ==================== -->
+<section id="ecra-config" class="ecra-marca oculto">
+  <div class="painel-marca">
+    <div class="marca-logo marca-logo-pequeno" id="config-logo"></div>
+    <h1>Ligar ao Supabase</h1>
+    <p class="nota">
+      Indique o URL e a chave <strong>anon</strong> do projecto. Se recebeu um
+      link de instalação da sua empresa, abra-o em vez de preencher isto.
+    </p>
+    <form id="form-config" class="formulario">
+      <label>URL do projecto
+        <input type="url" id="config-url" placeholder="https://xxxx.supabase.co" required />
+      </label>
+      <label>Chave anon (public)
+        <input type="text" id="config-chave" placeholder="eyJhbGciOi..." required />
+      </label>
+      <div id="config-erro" class="alerta alerta-erro oculto"></div>
+      <button type="submit" class="botao botao-primario">Guardar e continuar</button>
+    </form>
+  </div>
+</section>
+
+<!-- ========================== Login ============================== -->
+<section id="ecra-login" class="ecra-marca oculto">
+  <div class="painel-marca">
+    <div class="marca-logo marca-logo-pequeno" id="login-logo"></div>
+    <h1>Registo de ponto</h1>
+    <form id="form-login" class="formulario">
+      <label>Email
+        <input type="email" id="login-email" autocomplete="username"
+               inputmode="email" autocapitalize="none" required />
+      </label>
+      <label>Palavra-passe
+        <input type="password" id="login-palavra-passe" autocomplete="current-password" required />
+      </label>
+      <div id="login-erro" class="alerta alerta-erro oculto"></div>
+      <button type="submit" class="botao botao-primario" id="login-submeter">Entrar</button>
+      <button type="button" class="botao botao-texto" id="login-recuperar">
+        Esqueci-me da palavra-passe
+      </button>
+    </form>
+    <p class="nota nota-centro">
+      <button type="button" class="ligacao" id="mudar-projecto">Mudar de projecto Supabase</button>
+    </p>
+  </div>
+</section>
+
+<!-- ======================== Aplicação ============================ -->
+<div id="app" class="oculto">
+  <div id="barra-offline" class="barra-offline oculto">Sem ligação — os registos precisam de Internet.</div>
+
+  <main id="conteudo" class="conteudo" aria-live="polite"></main>
+
+  <nav class="tabs" aria-label="Navegação principal">
+    <a href="#/inicio" data-tab="inicio">
+      <span class="tab-icone" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
+        </svg>
+      </span>
+      <span>Início</span>
+    </a>
+    <a href="#/historico" data-tab="historico">
+      <span class="tab-icone" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M4 6h16M4 12h16M4 18h10" />
+        </svg>
+      </span>
+      <span>Histórico</span>
+    </a>
+    <a href="#/faltas" data-tab="faltas">
+      <span class="tab-icone" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M5 4h11l3 3v13H5z" /><path d="M8 11h8M8 15h5" />
+        </svg>
+      </span>
+      <span>Faltas</span>
+    </a>
+    <a href="#/perfil" data-tab="perfil">
+      <span class="tab-icone" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="8" r="3.5" /><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" />
+        </svg>
+      </span>
+      <span>Perfil</span>
+    </a>
+  </nav>
+</div>
+
+<!-- ==================== Leitor de QR code ======================== -->
+<div id="ecra-scanner" class="scanner oculto">
+  <div id="scanner-video" class="scanner-video"></div>
+  <div class="scanner-sobreposicao">
+    <div class="scanner-topo">
+      <h2 id="scanner-titulo">Entrada</h2>
+      <p>Aponte a câmara ao QR code afixado na entrada</p>
+    </div>
+    <div class="scanner-alvo"></div>
+    <div class="scanner-rodape">
+      <div id="scanner-erro" class="alerta alerta-erro oculto"></div>
+      <button type="button" class="botao botao-claro" id="scanner-cancelar">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= Feedback ============================== -->
+<div id="modal-fundo" class="modal-fundo oculto">
+  <div class="modal" role="dialog" aria-modal="true" id="modal"></div>
+</div>
+
+<div id="sucesso" class="sucesso oculto" role="status">
+  <div class="sucesso-cartao">
+    <div class="sucesso-circulo" id="sucesso-circulo"><span id="sucesso-simbolo">✓</span></div>
+    <p class="sucesso-titulo" id="sucesso-titulo"></p>
+    <p class="sucesso-nota oculto" id="sucesso-nota"></p>
+  </div>
+</div>
+
+<div id="notificacao" class="notificacao oculto" role="status"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

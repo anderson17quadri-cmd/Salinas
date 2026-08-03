@@ -1,0 +1,126 @@
+name: Publicar no GitHub Pages
+
+# Publica os dois frontends a partir de `public/`:
+#   /        → PWA do funcionário
+#   /admin/  → painel de administração
+#
+# O GitHub Pages serve tudo em HTTPS, que é requisito para a câmara
+# (getUserMedia) e para a geolocalização funcionarem no browser.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    name: Publicar
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Recusar credenciais commitadas
+        run: |
+          # As chaves do Supabase são JWT e começam sempre por este prefixo.
+          # Procurar a palavra "service_role" não serviria: dentro da chave
+          # ela vai codificada em base64, e aparece legitimamente no código
+          # que avisa o utilizador de que escolheu a chave errada.
+          if grep -rn "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" public/ ; then
+            echo "::error::Parece haver uma chave do Supabase commitada em public/. Use os secrets do repositório."
+            exit 1
+          fi
+
+      - name: Injectar configuração do Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::notice::Sem os secrets SUPABASE_URL/SUPABASE_ANON_KEY — o site vai pedir a configuração na primeira utilização."
+            exit 0
+          fi
+
+          # Descodifica o payload do JWT e confirma que é mesmo a chave anon.
+          # Publicar a service_role daria a qualquer visitante acesso total à
+          # base de dados, ignorando o RLS — é o erro que mais importa apanhar.
+          node -e '
+            const chave = process.env.SUPABASE_ANON_KEY;
+            const partes = chave.split(".");
+            if (partes.length !== 3) {
+              console.error("::error::SUPABASE_ANON_KEY não parece um JWT do Supabase.");
+              process.exit(1);
+            }
+            let papel;
+            try {
+              papel = JSON.parse(Buffer.from(partes[1], "base64url").toString()).role;
+            } catch {
+              console.error("::error::Não consegui ler o payload de SUPABASE_ANON_KEY.");
+              process.exit(1);
+            }
+            if (papel !== "anon") {
+              console.error(`::error::SUPABASE_ANON_KEY tem role="${papel}". Use a chave anon (public), nunca a service_role.`);
+              process.exit(1);
+            }
+          '
+
+          for ficheiro in public/js/config.js public/admin/js/config.js; do
+            # Os valores vão por variável de ambiente e não pela linha de
+            # comandos, para não aparecerem nos logs da execução.
+            SUPABASE_URL="${SUPABASE_URL%/}" node -e '
+              const fs = require("fs");
+              const caminho = process.argv[1];
+              const texto = fs.readFileSync(caminho, "utf8");
+
+              const novo = texto
+                .replace("__SUPABASE_URL__", process.env.SUPABASE_URL)
+                .replace("__SUPABASE_ANON_KEY__", process.env.SUPABASE_ANON_KEY);
+
+              if (novo === texto) {
+                console.error(`::error::Não encontrei os placeholders em ${caminho}.`);
+                process.exit(1);
+              }
+              fs.writeFileSync(caminho, novo);
+            ' "$ficheiro"
+            echo "  configurado: $ficheiro"
+          done
+
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Empacotar site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Publicar
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Resumo
+        run: |
+          {
+            echo "### Salinas publicada"
+            echo ""
+            echo "- **App do funcionário (PWA):** ${{ steps.deployment.outputs.page_url }}"
+            echo "- **Painel de administração:** ${{ steps.deployment.outputs.page_url }}admin/"
+            echo ""
+            echo "Partilhe o primeiro endereço com a equipa e peça que usem"
+            echo "\"Adicionar ao Ecrã Principal\" para instalar a app."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Salinas — Painel de Administração</title>
+  <meta name="description" content="Painel de gestão de registo de ponto Salinas." />
+  <meta name="theme-color" content="#F5A323" />
+  <link rel="icon" href="../assets/icone-192.png" />
+  <link rel="stylesheet" href="css/estilos.css" />
+</head>
+<body>
+
+<!-- ================= Configuração (1.ª utilização) ================= -->
+<section id="ecra-config" class="ecra-centrado oculto">
+  <div class="cartao cartao-estreito">
+    <img class="marca-logo" src="../assets/logo.png" alt="Pastelaria Salinas" />
+    <p class="subtitulo">Painel de administração — ligar ao Supabase</p>
+    <p class="nota">
+      Indique o URL e a chave <strong>anon</strong> do seu projecto
+      (Supabase → Project Settings → API). Ficam guardados apenas neste navegador.
+    </p>
+    <form id="form-config" class="formulario">
+      <label>URL do projecto
+        <input type="url" id="config-url" placeholder="https://xxxx.supabase.co" required />
+      </label>
+      <label>Chave anon (public)
+        <input type="text" id="config-chave" placeholder="eyJhbGciOi..." required />
+      </label>
+      <div id="config-erro" class="alerta alerta-erro oculto"></div>
+      <button type="submit" class="botao botao-primario">Guardar e continuar</button>
+    </form>
+  </div>
+</section>
+
+<!-- ========================== Autenticação ========================= -->
+<section id="ecra-login" class="ecra-centrado oculto">
+  <div class="cartao cartao-estreito">
+    <img class="marca-logo" src="../assets/logo.png" alt="Pastelaria Salinas" />
+    <p class="subtitulo">Painel de administração</p>
+    <form id="form-login" class="formulario">
+      <label>Email
+        <input type="email" id="login-email" autocomplete="username" required />
+      </label>
+      <label>Palavra-passe
+        <input type="password" id="login-palavra-passe" autocomplete="current-password" required />
+      </label>
+      <div id="login-erro" class="alerta alerta-erro oculto"></div>
+      <button type="submit" class="botao botao-primario" id="login-submeter">Entrar</button>
+      <button type="button" class="botao botao-texto" id="login-recuperar">
+        Esqueci-me da palavra-passe
+      </button>
+    </form>
+    <p class="nota nota-config">
+      <button type="button" class="ligacao" id="mudar-projecto">Mudar de projecto Supabase</button>
+    </p>
+  </div>
+</section>
+
+<!-- ======================== Aplicação ============================== -->
+<div id="app" class="oculto">
+  <aside class="barra-lateral">
+    <div class="barra-marca">
+      <img src="../assets/logo.png" alt="Pastelaria Salinas" />
+      <span class="empresa-nome" id="barra-empresa">—</span>
+    </div>
+    <nav class="navegacao">
+      <a href="#/dashboard"      data-nav="dashboard">Dashboard</a>
+      <a href="#/funcionarios"   data-nav="funcionarios">Funcionários</a>
+      <a href="#/registos"       data-nav="registos">Registos</a>
+      <a href="#/qrcode"         data-nav="qrcode">QR Code</a>
+      <a href="#/justificacoes"  data-nav="justificacoes">Justificações</a>
+      <a href="#/relatorio"      data-nav="relatorio">Relatório mensal</a>
+      <a href="#/definicoes"     data-nav="definicoes">Definições</a>
+    </nav>
+    <div class="barra-rodape">
+      <span id="barra-utilizador" class="utilizador">—</span>
+      <button type="button" class="botao botao-texto" id="terminar-sessao">Terminar sessão</button>
+    </div>
+  </aside>
+
+  <main class="conteudo" id="conteudo" aria-live="polite">
+    <div class="carregando">A carregar…</div>
+  </main>
+</div>
+
+<div id="modal-fundo" class="modal-fundo oculto">
+  <div class="modal" role="dialog" aria-modal="true" id="modal"></div>
+</div>
+
+<div id="notificacao" class="notificacao oculto" role="status"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

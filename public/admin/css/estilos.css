@@ -1,0 +1,426 @@
+/* =====================================================================
+   Salinas — Painel de Administração
+   ===================================================================== */
+
+:root {
+  /* Identidade Pastelaria Salinas — o laranja é o do ficheiro do logo,
+     para que o PNG assente sem emenda sobre os fundos da marca. */
+  --primaria: #F5A323;
+  --primaria-clara: #FDF0DA;
+  --primaria-escura: #D98A0F;
+  --tinta: #12100C;
+  --acento: #B4741A;
+  --fundo: #FFFBF4;
+  --cartao: #FFFFFF;
+  --texto: #1E1A14;
+  --texto-suave: #7A7266;
+  --borda: #EDE4D6;
+  --sucesso: #1E8E5A;
+  --aviso: #B4741A;
+  --erro: #C0392B;
+  --neutro: #8A8377;
+  --raio: 12px;
+  --raio-lg: 18px;
+  --sombra: 0 2px 12px rgba(60, 40, 10, 0.07);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--fundo);
+  color: var(--texto);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.oculto { display: none !important; }
+
+/* ------------------------------ Ecrãs centrados -------------------- */
+.ecra-centrado {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.cartao {
+  background: var(--cartao);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-lg);
+  padding: 24px;
+  box-shadow: var(--sombra);
+}
+
+.cartao-estreito { width: 100%; max-width: 400px; }
+
+/* Logo nos ecrãs de configuração e de login */
+.marca-logo {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 12px;
+}
+
+.subtitulo {
+  text-align: center;
+  color: var(--texto-suave);
+  margin: 4px 0 20px;
+}
+
+.nota { font-size: 13px; color: var(--texto-suave); line-height: 1.55; }
+.nota-config { text-align: center; margin-top: 16px; margin-bottom: 0; }
+
+/* ------------------------------ Formulários ------------------------ */
+.formulario { display: flex; flex-direction: column; gap: 14px; }
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+input, select, textarea {
+  width: 100%;
+  margin-top: 6px;
+  padding: 11px 12px;
+  font: inherit;
+  font-weight: 400;
+  color: var(--texto);
+  background: var(--cartao);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--primaria);
+  outline-offset: -1px;
+  border-color: var(--primaria);
+}
+
+textarea { resize: vertical; min-height: 80px; }
+
+/* ------------------------------ Botões ----------------------------- */
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font: inherit;
+  font-weight: 600;
+  border-radius: var(--raio);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: opacity .15s, background .15s;
+  white-space: nowrap;
+}
+
+.botao:disabled { opacity: .55; cursor: not-allowed; }
+.botao:hover:not(:disabled) { opacity: .9; }
+
+.botao-primario { background: var(--primaria); color: var(--tinta); }
+.botao-secundario { background: transparent; color: var(--primaria); border-color: var(--primaria); }
+.botao-perigo { background: var(--erro); color: #fff; }
+.botao-texto { background: none; color: var(--primaria); border: none; padding: 8px; }
+.botao-pequeno { padding: 6px 12px; font-size: 13px; }
+
+.ligacao {
+  background: none;
+  border: none;
+  color: var(--primaria);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+/* ------------------------------ Alertas ---------------------------- */
+.alerta {
+  padding: 11px 14px;
+  border-radius: var(--raio);
+  font-size: 14px;
+  border: 1px solid;
+}
+
+.alerta-erro { background: #FDEDEB; color: var(--erro); border-color: #F5C6C0; }
+.alerta-sucesso { background: #E8F5EE; color: var(--sucesso); border-color: #BFE3D0; }
+.alerta-aviso { background: #FCF3E4; color: var(--aviso); border-color: #EFDCBC; }
+
+/* ------------------------------ Layout ----------------------------- */
+#app { display: flex; min-height: 100vh; }
+
+.barra-lateral {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--tinta);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 14px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.barra-marca { padding: 0 8px 20px; }
+.barra-marca img { display: block; width: 100%; max-width: 180px; height: auto; border-radius: 10px; }
+.empresa-nome { display: block; font-size: 12px; color: rgba(255,255,255,.62); margin-top: 8px; }
+
+.navegacao { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+
+.navegacao a {
+  display: block;
+  padding: 10px 12px;
+  color: rgba(255,255,255,.78);
+  text-decoration: none;
+  border-radius: var(--raio);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.navegacao a:hover { background: rgba(255,255,255,.08); color: #fff; }
+.navegacao a.activo { background: var(--primaria); color: var(--tinta); font-weight: 700; }
+
+.barra-rodape { border-top: 1px solid rgba(255,255,255,.14); padding-top: 12px; }
+.utilizador { display: block; font-size: 12px; color: rgba(255,255,255,.6); padding: 0 8px 4px; word-break: break-all; }
+.barra-rodape .botao-texto { color: rgba(255,255,255,.85); }
+
+.conteudo { flex: 1; padding: 28px 32px; max-width: 1400px; min-width: 0; }
+
+.carregando { padding: 40px; color: var(--texto-suave); text-align: center; }
+
+/* ------------------------------ Cabeçalhos ------------------------- */
+.pagina-cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+h1 { font-size: 26px; margin: 0; letter-spacing: -.5px; }
+h2 { font-size: 18px; margin: 0 0 12px; }
+h3 { font-size: 15px; margin: 0 0 8px; }
+.pagina-cabecalho p { margin: 4px 0 0; color: var(--texto-suave); font-size: 14px; }
+
+.accoes { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ------------------------------ Métricas --------------------------- */
+.grelha-metricas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.metrica {
+  background: var(--cartao);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-lg);
+  padding: 18px;
+  box-shadow: var(--sombra);
+}
+
+.metrica-valor { font-size: 30px; font-weight: 800; line-height: 1.1; letter-spacing: -1px; }
+.metrica-rotulo { font-size: 13px; color: var(--texto-suave); margin-top: 4px; }
+
+/* ------------------------------ Tabelas ---------------------------- */
+.tabela-wrapper {
+  background: var(--cartao);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-lg);
+  overflow-x: auto;
+  box-shadow: var(--sombra);
+}
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+th {
+  text-align: left;
+  padding: 12px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  border-bottom: 1px solid var(--borda);
+  white-space: nowrap;
+}
+
+td { padding: 12px 14px; border-bottom: 1px solid var(--borda); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: #FFFAF0; }
+
+.numero { font-variant-numeric: tabular-nums; text-align: right; }
+.inactivo td { opacity: .55; }
+
+/* ------------------------------ Etiquetas -------------------------- */
+.etiqueta {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.etiqueta-dentro    { color: var(--sucesso); background: #E8F5EE; border-color: #BFE3D0; }
+.etiqueta-pausa     { color: var(--aviso);   background: #FCF3E4; border-color: #EFDCBC; }
+.etiqueta-fora      { color: var(--neutro);  background: #F3F1ED; border-color: #E2DED6; }
+.etiqueta-erro      { color: var(--erro);    background: #FDEDEB; border-color: #F5C6C0; }
+.etiqueta-primaria  { color: var(--primaria-escura); background: var(--primaria-clara); border-color: #F0D9AE; }
+
+/* ------------------------------ Filtros ---------------------------- */
+.filtros {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  background: var(--cartao);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-lg);
+  padding: 16px;
+  margin-bottom: 18px;
+}
+
+.filtros label { flex: 1 1 160px; min-width: 140px; }
+
+/* ------------------------------ QR code ---------------------------- */
+.qr-caixa {
+  background: #fff;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-lg);
+  padding: 32px;
+  text-align: center;
+  box-shadow: var(--sombra);
+}
+
+.qr-caixa canvas, .qr-caixa img {
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.qr-cartaz { max-width: 460px; margin: 0 auto; }
+.qr-cartaz h2 { font-size: 24px; margin-bottom: 4px; }
+.qr-cartaz p { color: var(--texto-suave); margin: 0 0 20px; }
+.qr-logo { display: block; width: 100%; max-width: 240px; height: auto; margin: 0 auto 16px; border-radius: 12px; }
+
+.qr-passos {
+  text-align: left;
+  max-width: 320px;
+  margin: 20px auto 0;
+  padding-left: 20px;
+  color: var(--texto-suave);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.grelha-duas {
+  display: grid;
+  grid-template-columns: minmax(300px, 460px) 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* ------------------------------ Modal ------------------------------ */
+.modal-fundo {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 25, 20, .5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+}
+
+.modal {
+  background: var(--cartao);
+  border-radius: var(--raio-lg);
+  padding: 24px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+.modal-accoes { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+/* ------------------------------ Notificação ------------------------ */
+.notificacao {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--texto);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: var(--raio);
+  font-size: 14px;
+  z-index: 60;
+  box-shadow: 0 6px 20px rgba(0,0,0,.2);
+  max-width: 90vw;
+}
+
+.notificacao.erro { background: var(--erro); }
+.notificacao.sucesso { background: var(--sucesso); }
+
+/* ------------------------------ Horários --------------------------- */
+.grelha-horario { display: flex; flex-direction: column; gap: 8px; }
+
+.linha-horario {
+  display: grid;
+  grid-template-columns: 90px 1fr 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.linha-horario span { font-size: 14px; }
+.linha-horario input { margin-top: 0; }
+
+.vazio { padding: 40px; text-align: center; color: var(--texto-suave); }
+
+/* ------------------------------ Responsivo ------------------------- */
+@media (max-width: 860px) {
+  #app { flex-direction: column; }
+  .barra-lateral { width: 100%; height: auto; position: static; padding: 14px; }
+  .navegacao { flex-direction: row; overflow-x: auto; gap: 4px; }
+  .navegacao a { white-space: nowrap; }
+  .barra-rodape { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .utilizador { padding-bottom: 0; }
+  .conteudo { padding: 18px 16px; }
+  .grelha-duas { grid-template-columns: 1fr; }
+}
+
+/* ------------------------------ Impressão -------------------------- */
+@media print {
+  .barra-lateral, .accoes, .filtros, .notificacao, .nao-imprimir { display: none !important; }
+  #app { display: block; }
+  .conteudo { padding: 0; max-width: none; }
+  .cartao, .tabela-wrapper, .qr-caixa, .metrica {
+    box-shadow: none;
+    border-color: #ccc;
+    break-inside: avoid;
+  }
+  body { background: #fff; font-size: 12px; }
+  table { font-size: 11px; }
+  th, td { padding: 6px 8px; }
+  a { text-decoration: none; color: inherit; }
+}

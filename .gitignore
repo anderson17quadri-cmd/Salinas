@@ -1,31 +1,18 @@
 # Dependências
 node_modules/
-.pnp
-.pnp.js
 
 # Variáveis de ambiente — NUNCA commitar
 .env
 .env.*
 !.env.example
 
-# Expo
-.expo/
-.expo-shared/
-dist/
-web-build/
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-*.orig.*
+# Configuração local com credenciais injectadas no deploy
+# (os ficheiros versionados têm apenas placeholders)
+public/js/config.local.js
+public/admin/js/config.local.js
 
-# Android / build nativo
-app/android/
-app/ios/
-*.apk
-*.aab
-*.keystore
+# Saídas dos utilitários
+tools/output/
 
 # Logs
 npm-debug.*
@@ -40,7 +27,3 @@ Thumbs.db
 # Editores
 .vscode/
 .idea/
-
-# Ficheiros gerados
-admin/qr/*.png
-tools/output/

@@ -1,0 +1,293 @@
+<div align="center">
+  <img src="public/assets/logo.png" alt="Pastelaria Salinas" width="320" />
+
+  <h1>Salinas — Registo de Ponto</h1>
+
+  <p>
+    Registo de entradas e saídas por <strong>QR code</strong> ou
+    <strong>geolocalização</strong>, com painel de gestão para a folha de salários.
+  </p>
+</div>
+
+---
+
+## O que é
+
+Duas aplicações web sobre um backend Supabase:
+
+| | O quê | Onde |
+|---|---|---|
+| **App do funcionário** | PWA instalável no telemóvel: bater ponto, ver histórico, justificar faltas | `/` |
+| **Painel de administração** | Dashboard, funcionários, registos, QR code, justificações, relatório mensal | `/admin/` |
+
+A app do funcionário é uma **PWA** — corre no browser e instala-se no ecrã
+principal com "Adicionar ao Ecrã Principal", em Android e em iPhone. Não há
+Play Store, App Store, conta de developer nem Mac envolvidos.
+
+**Limitações de ser PWA**, assumidas de propósito:
+
+- Sem notificações push fiáveis no iPhone (o suporte do Safari é muito limitado).
+- Não aparece nas lojas — a instalação é sempre por link ou QR code partilhado
+  pela empresa.
+- A permissão de câmara pode ser pedida mais vezes do que numa app nativa.
+
+Se um dia fizer sentido publicar nas lojas, o backend fica igual: só o
+frontend é que muda.
+
+---
+
+## Estrutura
+
+```
+supabase/          Schema, RLS, RPC functions e testes
+  01_schema.sql      Tabelas, índices e triggers
+  02_rls.sql         Row Level Security e grants (incl. ao nível da coluna)
+  03_functions.sql   RPC SECURITY DEFINER — toda a lógica de negócio
+  04_storage.sql     Buckets e policies de ficheiros
+  05_seed.sql        Dados de arranque (opcional)
+  00_stubs_teste.sql Emulação do Supabase para testes locais — NÃO correr em produção
+  testes/            Suite de testes das regras de negócio e do RLS
+
+public/            Tudo o que vai para o GitHub Pages
+  index.html         PWA do funcionário
+  manifest.json      Instalação no ecrã principal
+  sw.js              Service worker
+  assets/            Logo e ícones
+  css/ js/           Estilos e código da PWA
+  admin/             Painel de administração (HTML + JS puro)
+
+tools/             Utilitários Node
+  gerar-qrcode.js    Cartaz A4 com o QR code da empresa
+  gerar-icones.js    Ícones da PWA a partir do logo
+```
+
+---
+
+## Setup
+
+### 1. Base de dados (Supabase)
+
+Crie um projecto em [supabase.com](https://supabase.com) e, no **SQL Editor**,
+corra os ficheiros **por esta ordem**:
+
+```
+supabase/01_schema.sql
+supabase/02_rls.sql
+supabase/03_functions.sql
+supabase/04_storage.sql
+supabase/05_seed.sql      (opcional — dados de exemplo)
+```
+
+> `00_stubs_teste.sql` é só para correr o schema num Postgres normal. **Não o
+> execute no Supabase**: recria objectos que o Supabase já fornece.
+
+### 2. Empresa, administrador e funcionários
+
+No **SQL Editor**, crie a empresa e o administrador:
+
+```sql
+insert into empresas (nome, morada, latitude, longitude, raio_metros)
+values ('Pastelaria Salinas', 'Rua …, Lisboa', 38.707751, -9.136592, 100);
+
+insert into admins (empresa_id, nome, email)
+select id, 'Anderson', 'admin@exemplo.pt' from empresas where nome = 'Pastelaria Salinas';
+```
+
+Depois, em **Authentication → Users**, crie a conta com esse email. O trigger
+`on_auth_user_created` liga automaticamente a conta ao registo de admin.
+
+Os funcionários criam-se pelo painel (**Funcionários → Novo funcionário**).
+Para cada um, crie também a conta em Authentication → Users com o mesmo email —
+ou peça-lhes que usem "Esqueci-me da palavra-passe" na app para a definirem.
+
+### 3. Coordenadas e métodos de registo
+
+No painel, em **Definições**, defina:
+
+- **Latitude/longitude** do local de trabalho (o botão "Usar a minha localização
+  actual" preenche-as se estiver lá) e o **raio** permitido em metros.
+- Que **métodos** estão activos — QR code, geolocalização, ou ambos.
+- Se a **foto** de confirmação é obrigatória no registo por GPS.
+
+### 4. Publicar (GitHub Pages)
+
+Em **Settings → Pages**, escolha *Source: GitHub Actions*.
+
+Em **Settings → Secrets and variables → Actions**, adicione:
+
+| Secret | Valor |
+|---|---|
+| `SUPABASE_URL` | `https://xxxx.supabase.co` |
+| `SUPABASE_ANON_KEY` | a chave **anon / public** (Project Settings → API) |
+
+Um push para `main` publica automaticamente:
+
+- **PWA do funcionário** → `https://<utilizador>.github.io/Salinas/`
+- **Painel de administração** → `https://<utilizador>.github.io/Salinas/admin/`
+
+O Pages serve tudo em **HTTPS**, que é obrigatório para a câmara e o GPS
+funcionarem no browser.
+
+> **Nunca** use a chave `service_role` em nenhum destes sítios — ignora o RLS
+> por completo. O workflow recusa o deploy se a encontrar.
+
+**Sem secrets configurados** o site continua a funcionar: pede o URL e a chave
+na primeira utilização e guarda-os no navegador. Também pode partilhar um link
+já configurado com a equipa:
+
+```
+https://<utilizador>.github.io/Salinas/?supabase=https://xxxx.supabase.co&key=<chave-anon>
+```
+
+A app guarda os valores e limpa-os do endereço.
+
+---
+
+## Instalar a app no telemóvel
+
+Partilhe o endereço da PWA com a equipa (o painel gera um QR code para o efeito
+em **QR Code**, ou pode simplesmente enviar o link).
+
+**Android (Chrome)** — abra o link e toque em **Instalar** no aviso que aparece,
+ou no menu ⋮ → *Adicionar ao ecrã principal*.
+
+**iPhone (Safari)** — abra o link **no Safari** (não funciona no Chrome do iOS),
+toque em **Partilhar** (o quadrado com a seta) e depois em **Adicionar ao Ecrã
+Principal**.
+
+Feito isto, a Salinas fica com ícone próprio e abre em ecrã inteiro, sem barra
+de endereço.
+
+---
+
+## Usar
+
+### QR code na entrada
+
+Em **QR Code**, o painel mostra o código da empresa com o logo sobreposto,
+pronto a imprimir ("Imprimir cartaz"). O código usa correcção de erros de nível
+**H**, que recupera até 30% da imagem — é o que permite pôr o logo ao centro sem
+quebrar a leitura.
+
+Para gerar o cartaz fora do navegador:
+
+```bash
+cd tools && npm install
+node gerar-qrcode.js --token "<qr_code_token>" --empresa "Pastelaria Salinas"
+```
+
+Produz o PNG do código e um cartaz A4 (SVG e PNG) em `tools/output/`.
+
+Se o código for fotografado ou partilhado indevidamente, use **Regenerar
+código**: o antigo deixa de funcionar de imediato e há que afixar o novo.
+
+### Bater ponto
+
+O funcionário abre a app, toca em **Bater Ponto** e — se ambos os métodos
+estiverem activos — escolhe entre ler o QR code ou usar o GPS. O feedback é
+imediato: *"Entrada registada às 09:03"*.
+
+Fora do raio, o registo **é gravado na mesma**, marcado como fora do raio e com
+a distância — o gestor revê-o depois em **Registos**.
+
+---
+
+## Regras de negócio
+
+Estas regras vivem no servidor, em RPC `SECURITY DEFINER`. O cliente **não tem
+permissão de escrita** em `registos_ponto`, por isso não há como as contornar
+mexendo no frontend.
+
+- **Sequência do ponto.** Não é possível registar duas entradas seguidas sem
+  uma saída pelo meio, sair durante uma pausa, ou terminar uma pausa que não
+  começou.
+  `(nada|saída) → entrada`, `(entrada|fim de pausa) → saída | início de pausa`,
+  `início de pausa → fim de pausa`.
+- **Duplo toque.** Dois registos com menos de 30 segundos de intervalo são
+  recusados.
+- **QR de outra empresa.** O token é validado contra a empresa do funcionário —
+  ler o código de outra empresa não regista nada.
+- **Token secreto.** `empresas.qr_code_token` não é legível pela API, nem pelo
+  admin: os grants são ao nível da coluna e o token só sai pelo RPC
+  `admin_obter_qr_token()`.
+- **Isolamento.** Cada funcionário vê apenas os seus dados; cada admin vê apenas
+  o seu `empresa_id`. Garantido por RLS em todas as tabelas.
+- **Fusos horários.** A base de dados guarda sempre em **UTC**; a apresentação
+  converte para o fuso da empresa (`Europe/Lisbon` por omissão).
+- **Ficheiros.** Fotos e anexos vão para buckets privados, sempre em
+  `{empresa_id}/{funcionario_id}/…`, com policies que impedem o acesso
+  cruzado entre empresas.
+
+### Cálculo das horas
+
+O relatório mensal conta como trabalho os intervalos que começam numa **entrada**
+ou num **fim de pausa** e terminam no evento seguinte. As pausas ficam de fora.
+As horas esperadas vêm do horário definido por funcionário; sem horário,
+estimam-se a partir das horas semanais do contrato.
+
+---
+
+## Testes
+
+O schema tem uma suite de testes que cobre as regras de negócio, o isolamento
+entre empresas e as permissões. Corre num Postgres local descartável, sem tocar
+no projecto Supabase:
+
+```bash
+./supabase/testes/correr.sh
+```
+
+Cobre, entre outras coisas: a fórmula de Haversine, a máquina de estados do
+ponto, a rejeição de tokens de outra empresa, o registo fora do raio, o
+isolamento por RLS, a impossibilidade de ler `qr_code_token` ou de escrever
+directamente em `registos_ponto`, a regeneração do token e o relatório mensal.
+
+---
+
+## Desenvolvimento local
+
+A câmara e o GPS exigem um contexto seguro. `localhost` conta como seguro, por
+isso basta servir a pasta:
+
+```bash
+cd public && python3 -m http.server 4173
+```
+
+Depois abra `http://localhost:4173/` (PWA) ou `http://localhost:4173/admin/`
+(painel) e introduza o URL e a chave anon no ecrã de configuração.
+
+Para testar num telemóvel real, precisa de HTTPS — use `ngrok`, `cloudflared`
+ou publique numa branch de pré-visualização.
+
+---
+
+## Identidade visual
+
+O logo da Pastelaria Salinas está em `public/assets/logo.png` (wordmark sobre o
+laranja da marca, `#F5A323`). É usado no splash e no login da PWA, no cabeçalho
+do painel, no centro do QR code e como ícone da app.
+
+Para o substituir, troque o ficheiro e regenere os ícones:
+
+```bash
+cd tools && npm install
+node gerar-icones.js
+```
+
+Gera `icone-192.png`, `icone-512.png`, `icone-maskable-512.png` e
+`apple-touch-icon.png`. Se mudar o laranja, actualize também `--laranja` em
+`public/css/app.css`, `--primaria` em `public/admin/css/estilos.css` e
+`theme_color`/`background_color` em `public/manifest.json` — o PNG do logo traz
+o fundo incorporado e uma cor diferente daria uma emenda visível.
+
+---
+
+## Segurança
+
+- Nenhuma credencial no repositório. O `.env` está no `.gitignore` e a
+  configuração entra por secrets no deploy ou por localStorage.
+- A chave `anon` é pública por desenho e está sempre limitada pelo RLS. A
+  `service_role` não pode aparecer em lado nenhum do frontend — o workflow de
+  deploy falha se a detectar.
+- Toda a escrita sensível passa por RPC `SECURITY DEFINER` com validação de
+  permissões lá dentro.
