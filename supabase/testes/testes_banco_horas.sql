@@ -580,6 +580,100 @@ $$;
 
 -- ---------------------------------------------------------------------
 \echo ''
+\echo '== Turnos que atravessam a meia-noite =='
+do $$
+declare
+  v_mes date := date_trunc('month', (now() at time zone 'Europe/Lisbon') - interval '1 month')::date;
+  v_emp uuid := 'aaaaaaaa-0000-0000-0000-000000000001';
+  v_noite uuid := 'ffffffff-0000-0000-0000-00000000000b';
+  v_h record;
+  v_dias int;
+begin
+  -- Bruno passa a fazer o turno da noite, de segunda a sábado
+  delete from horarios_esperados where funcionario_id = v_noite;
+  insert into horarios_esperados (funcionario_id, dia_semana, hora_entrada, hora_saida)
+  select v_noite, d, time '18:00', time '02:00' from generate_series(1, 6) d;
+
+  select count(*) into v_dias
+  from generate_series(v_mes, (v_mes + interval '1 month')::date - 1, interval '1 day') d
+  where extract(dow from d) between 1 and 6;
+
+  select * into v_h from _horas_do_periodo(v_emp, v_mes, (v_mes + interval '1 month')::date, 'Europe/Lisbon')
+  where funcionario_id = v_noite;
+
+  perform teste_ok('turno da noite conta 8 h por dia, não -16',
+    v_h.horas_esperadas = v_dias * 8);
+  perform teste_ok('as horas esperadas são positivas', v_h.horas_esperadas > 0);
+
+  -- Turno da manhã, para comparar
+  delete from horarios_esperados where funcionario_id = v_noite;
+  insert into horarios_esperados (funcionario_id, dia_semana, hora_entrada, hora_saida)
+  select v_noite, d, time '06:00', time '14:00' from generate_series(1, 6) d;
+
+  select * into v_h from _horas_do_periodo(v_emp, v_mes, (v_mes + interval '1 month')::date, 'Europe/Lisbon')
+  where funcionario_id = v_noite;
+  perform teste_ok('turno da manhã dá o mesmo total', v_h.horas_esperadas = v_dias * 8);
+
+  -- Turno do pão
+  delete from horarios_esperados where funcionario_id = v_noite;
+  insert into horarios_esperados (funcionario_id, dia_semana, hora_entrada, hora_saida)
+  select v_noite, d, time '11:00', time '19:00' from generate_series(1, 6) d;
+
+  select * into v_h from _horas_do_periodo(v_emp, v_mes, (v_mes + interval '1 month')::date, 'Europe/Lisbon')
+  where funcionario_id = v_noite;
+  perform teste_ok('turno do pão dá o mesmo total', v_h.horas_esperadas = v_dias * 8);
+end;
+$$;
+
+\echo '== Banco de horas com turno da noite =='
+do $$
+declare
+  v_mes date := date_trunc('month', (now() at time zone 'Europe/Lisbon') - interval '1 month')::date;
+  v_noite uuid := 'ffffffff-0000-0000-0000-00000000000b';
+  v_emp uuid := 'aaaaaaaa-0000-0000-0000-000000000001';
+  v_mov banco_horas_movimentos;
+  v_dia date;
+begin
+  delete from horarios_esperados where funcionario_id = v_noite;
+  insert into horarios_esperados (funcionario_id, dia_semana, hora_entrada, hora_saida)
+  values (v_noite, 1, time '18:00', time '02:00');
+
+  -- Uma segunda-feira: entra às 18:00, sai às 02:00 do dia seguinte
+  v_dia := v_mes + ((1 - extract(dow from v_mes)::int + 7) % 7);
+  delete from registos_ponto where funcionario_id = v_noite;
+  insert into registos_ponto (funcionario_id, empresa_id, tipo, metodo, "timestamp") values
+    (v_noite, v_emp, 'entrada', 'qrcode', (v_dia + time '18:00') at time zone 'Europe/Lisbon'),
+    (v_noite, v_emp, 'saida',   'qrcode', (v_dia + 1 + time '02:00') at time zone 'Europe/Lisbon');
+
+  perform teste_entrar('33333333-3333-3333-3333-333333333333');
+  perform admin_fechar_periodo_banco_horas(
+    extract(year from v_mes)::int, extract(month from v_mes)::int);
+
+  select * into v_mov from banco_horas_movimentos
+  where funcionario_id = v_noite and manual is false;
+
+  perform teste_ok('um turno da noite trabalhado conta 8 h',
+    v_mov.horas_trabalhadas = 8);
+  -- O horário é só à segunda, mas o mês tem várias segundas: o esperado
+  -- é 8 h por cada uma delas.
+  declare v_segundas int;
+  begin
+    select count(*) into v_segundas
+    from generate_series(v_mes, (v_mes + interval '1 month')::date - 1, interval '1 day') d
+    where extract(dow from d) = 1;
+
+    perform teste_ok('o esperado é 8 h por cada segunda do mês',
+      v_mov.horas_esperadas = v_segundas * 8);
+    perform teste_ok('o saldo é o trabalhado menos o esperado, sem negativos absurdos',
+      v_mov.saldo = 8 - v_segundas * 8);
+    perform teste_ok('e nunca chega perto de -24 por causa da meia-noite',
+      v_mov.saldo > -(v_segundas * 8) - 1);
+  end;
+end;
+$$;
+
+-- ---------------------------------------------------------------------
+\echo ''
 \echo '======================================================='
 \echo ' Banco de horas: todos os testes passaram.'
 \echo '======================================================='

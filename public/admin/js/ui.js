@@ -100,7 +100,7 @@ let temporizadorNotificacao = null;
 export function notificar(mensagem, tom = 'info') {
   const el = document.getElementById('notificacao');
   el.textContent = mensagem;
-  el.className = `notificacao ${tom === 'info' ? '' : tom}`.trim();
+  el.className = `notificacao ${tom === 'info' ? '' : `notificacao-${tom}`}`.trim();
   clearTimeout(temporizadorNotificacao);
   temporizadorNotificacao = setTimeout(() => el.classList.add('oculto'), 3600);
 }

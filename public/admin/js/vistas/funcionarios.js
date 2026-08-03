@@ -281,6 +281,14 @@ function formularioEditar(f, container, ctx) {
   });
 }
 
+// Turnos da pastelaria. O da noite atravessa a meia-noite — o servidor
+// trata disso (ver `_duracao_turno`), aqui é só preencher.
+const TURNOS = [
+  { nome: 'Manhã', entrada: '06:00', saida: '14:00' },
+  { nome: 'Pão',   entrada: '11:00', saida: '19:00' },
+  { nome: 'Noite', entrada: '18:00', saida: '02:00' },
+];
+
 // ---------------------------------------------------------------------
 // Horário esperado
 // ---------------------------------------------------------------------
@@ -290,7 +298,22 @@ async function formularioHorario(f, container, ctx) {
 
   const modal = abrirModal(`
     <h2>Horário de ${esc(f.nome)}</h2>
-    <p class="nota">Deixe vazio um dia para o marcar como folga.</p>
+
+    <p class="nota">Preencher com um turno:</p>
+    <div class="turnos">
+      ${TURNOS.map((t, i) => `
+        <button type="button" class="botao botao-secundario botao-pequeno" data-turno="${i}">
+          ${t.nome}<br /><small>${t.entrada}–${t.saida}</small>
+        </button>
+      `).join('')}
+      <button type="button" class="botao botao-texto botao-pequeno" data-turno="limpar">Limpar tudo</button>
+    </div>
+
+    <p class="nota" style="margin-top:14px">
+      Os turnos preenchem de segunda a sábado. Depois pode ajustar dia a dia —
+      deixe vazio para marcar folga. O turno da noite passa a meia-noite e é
+      contado como 8 horas, não como negativo.
+    </p>
     <form class="formulario" id="form-horario">
       <div class="grelha-horario">
         ${DIAS_SEMANA.map((dia, i) => `
@@ -298,24 +321,65 @@ async function formularioHorario(f, container, ctx) {
             <span>${dia}</span>
             <input type="time" name="entrada-${i}" value="${(porDia[i]?.hora_entrada ?? '').slice(0, 5)}" />
             <input type="time" name="saida-${i}" value="${(porDia[i]?.hora_saida ?? '').slice(0, 5)}" />
+            <span class="duracao-dia" data-duracao="${i}"></span>
           </div>
         `).join('')}
       </div>
       <div class="alerta alerta-erro oculto" id="erro-horario"></div>
       <div class="modal-accoes">
         <button type="button" class="botao botao-secundario" data-fechar>Cancelar</button>
-        <button type="button" class="botao botao-secundario" id="preencher">Seg–Sex 09–18</button>
         <button type="submit" class="botao botao-primario">Guardar</button>
       </div>
     </form>
   `);
 
-  modal.querySelector('#preencher').addEventListener('click', () => {
-    [1, 2, 3, 4, 5].forEach((i) => {
-      modal.querySelector(`[name="entrada-${i}"]`).value = '09:00';
-      modal.querySelector(`[name="saida-${i}"]`).value = '18:00';
-    });
-  });
+  modal.querySelectorAll('[data-turno]').forEach((b) =>
+    b.addEventListener('click', () => {
+      const limpar = b.dataset.turno === 'limpar';
+      const turno = limpar ? null : TURNOS[Number(b.dataset.turno)];
+
+      // Segunda a sábado: numa pastelaria o sábado é dia de trabalho.
+      // Domingo fica de fora — quem trabalhar ao domingo acrescenta à mão.
+      for (let i = 0; i < 7; i += 1) {
+        const preenche = !limpar && i >= 1 && i <= 6;
+        modal.querySelector(`[name="entrada-${i}"]`).value = preenche ? turno.entrada : '';
+        modal.querySelector(`[name="saida-${i}"]`).value = preenche ? turno.saida : '';
+      }
+    })
+  );
+
+  // Mostrar quantas horas dá cada dia, para o turno da noite não deixar
+  // dúvidas de que conta 8 h e não menos.
+  function actualizarDuracoes() {
+    for (let i = 0; i < 7; i += 1) {
+      const entrada = modal.querySelector(`[name="entrada-${i}"]`).value;
+      const saida = modal.querySelector(`[name="saida-${i}"]`).value;
+      const alvo = modal.querySelector(`[data-duracao="${i}"]`);
+
+      if (!entrada || !saida || entrada === saida) {
+        alvo.textContent = entrada || saida ? '' : 'folga';
+        alvo.classList.toggle('folga', !entrada && !saida);
+        continue;
+      }
+
+      const [he, me] = entrada.split(':').map(Number);
+      const [hs, ms] = saida.split(':').map(Number);
+      let minutos = hs * 60 + ms - (he * 60 + me);
+      if (minutos <= 0) minutos += 24 * 60;
+
+      alvo.classList.remove('folga');
+      alvo.textContent = `${Math.floor(minutos / 60)}h${String(minutos % 60).padStart(2, '0')}`
+        + (hs * 60 + ms <= he * 60 + me ? ' (noite)' : '');
+    }
+  }
+
+  modal.querySelectorAll('input[type="time"]').forEach((i) =>
+    i.addEventListener('change', actualizarDuracoes)
+  );
+  modal.querySelectorAll('[data-turno]').forEach((b) =>
+    b.addEventListener('click', () => setTimeout(actualizarDuracoes, 0))
+  );
+  actualizarDuracoes();
 
   modal.querySelector('#form-horario').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -328,8 +392,11 @@ async function formularioHorario(f, container, ctx) {
       const saida = modal.querySelector(`[name="saida-${i}"]`).value;
       if (!entrada || !saida) continue;
 
-      if (saida <= entrada) {
-        erro.textContent = `${DIAS_SEMANA[i]}: a hora de saída tem de ser depois da entrada.`;
+      // Não se valida `saida > entrada`: um turno da noite (18:00 → 02:00)
+      // tem mesmo de ter a saída "antes" da entrada. O servidor sabe
+      // interpretá-lo como passagem de meia-noite.
+      if (saida === entrada) {
+        erro.textContent = `${DIAS_SEMANA[i]}: a entrada e a saída não podem ser à mesma hora.`;
         erro.classList.remove('oculto');
         return;
       }

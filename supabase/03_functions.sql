@@ -684,6 +684,29 @@ begin
 end;
 $$;
 
+-- ---------------------------------------------------------------------
+-- Duração de um turno, em horas
+-- ---------------------------------------------------------------------
+-- Um turno da noite (18:00 → 02:00) tem a hora de saída menor do que a de
+-- entrada. Subtrair directamente dava -16 h em vez de 8 — e essas horas
+-- negativas iam parar ao banco de horas como dívida.
+create or replace function _duracao_turno(p_entrada time, p_saida time)
+returns numeric
+language sql
+immutable
+as $$
+  select round(
+    (
+      extract(epoch from (p_saida - p_entrada))
+      -- Saída menor ou igual à entrada = o turno passa a meia-noite.
+      + case when p_saida <= p_entrada then 86400 else 0 end
+    ) / 3600.0
+  , 2);
+$$;
+
+revoke all on function _duracao_turno(time, time) from public, anon;
+grant execute on function _duracao_turno(time, time) to authenticated;
+
 -- =====================================================================
 -- CÁLCULO DE HORAS DE UM PERÍODO
 -- =====================================================================
@@ -749,7 +772,7 @@ as $$
     select
       h.funcionario_id,
       dias.dia,
-      extract(epoch from (h.hora_saida - h.hora_entrada)) / 3600.0 as horas
+      _duracao_turno(h.hora_entrada, h.hora_saida) as horas
     from dias
     join horarios_esperados h on h.dia_semana = dias.dow
     join func f on f.id = h.funcionario_id

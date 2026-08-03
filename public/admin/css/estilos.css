@@ -422,18 +422,32 @@ tbody tr:hover { background: #FFFAF0; }
   max-width: 90vw;
 }
 
-.notificacao.erro { background: var(--erro); }
-.notificacao.sucesso { background: var(--sucesso); }
+.notificacao-erro { background: var(--erro); }
+.notificacao-sucesso { background: var(--sucesso); }
 
 /* ------------------------------ Horários --------------------------- */
 .grelha-horario { display: flex; flex-direction: column; gap: 8px; }
 
 .linha-horario {
   display: grid;
-  grid-template-columns: 90px 1fr 1fr;
+  grid-template-columns: 84px 1fr 1fr 88px;
   gap: 10px;
   align-items: center;
 }
+
+.duracao-dia {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primaria-escura);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.duracao-dia.folga { color: var(--texto-suave); font-weight: 400; font-style: italic; }
+
+.turnos { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.turnos .botao { flex: 1 1 90px; line-height: 1.25; }
+.turnos small { font-weight: 400; opacity: .75; font-size: 11px; }
 
 .linha-horario span { font-size: 14px; }
 .linha-horario input { margin-top: 0; }

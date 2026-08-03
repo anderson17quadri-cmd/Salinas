@@ -498,8 +498,12 @@ h2.subtitulo { font-size: 17px; margin: 0 0 12px; }
   box-shadow: 0 6px 20px rgba(0,0,0,.25);
 }
 
-.notificacao.erro { background: var(--erro); }
-.notificacao.sucesso { background: var(--sucesso); }
+/* Nomes próprios em vez de `.erro`/`.sucesso`: `.sucesso` já é o ecrã
+   inteiro de "Entrada registada", e uma notificação com as duas classes
+   herdava o `inset: 0` desse ecrã — ficava uma mancha verde a atravessar
+   o telemóvel de cima a baixo. */
+.notificacao-erro { background: var(--erro); }
+.notificacao-sucesso { background: var(--sucesso); }
 
 /* ------------------------- Convite de instalação ------------------- */
 .instalar {
