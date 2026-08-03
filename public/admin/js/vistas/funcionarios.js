@@ -183,11 +183,11 @@ function mostrarAcesso(acesso, container, ctx) {
     }
   });
 
-  document.getElementById('modal-fundo').addEventListener('click', function aoFechar(e) {
-    if (e.target.id === 'modal-fundo' || e.target.hasAttribute('data-fechar')) {
-      document.getElementById('modal-fundo').removeEventListener('click', aoFechar);
-      renderFuncionarios(container, ctx);
-    }
+  // `abrirModal` já liga o [data-fechar] ao fechar; aqui só se acrescenta
+  // o refrescar da lista, para o botão "Criar acesso" desaparecer e a
+  // coluna passar a "Activada" sem ser preciso recarregar a página.
+  modal.querySelector('[data-fechar]').addEventListener('click', () => {
+    renderFuncionarios(container, ctx);
   });
 }
 
