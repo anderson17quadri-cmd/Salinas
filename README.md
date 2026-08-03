@@ -130,9 +130,20 @@ Configuration**, ponha o endereço publicado em *Site URL* e em *Redirect URLs*,
 e use "Esqueci-me da palavra-passe" no ecrã de entrada. O link do email abre o
 ecrã **Definir palavra-passe** — é o mesmo caminho para os funcionários.
 
-Os funcionários criam-se pelo painel (**Funcionários → Novo funcionário**).
-Para cada um, crie também a conta em Authentication → Users com o mesmo email —
-ou peça-lhes que usem "Esqueci-me da palavra-passe" na app para a definirem.
+Os funcionários criam-se pelo painel (**Funcionários → Novo funcionário**) e,
+a seguir, **Criar acesso** — que gera a conta e uma palavra-passe temporária
+para entregar em mão. Não é enviado nenhum email.
+
+> **Porquê em mão e não por email:** o serviço de email do plano gratuito do
+> Supabase está limitado a **2 emails por hora** em todo o projecto, e levantar
+> esse limite exige configurar SMTP próprio. Para dar acesso a uma equipa de uma
+> vez, o email não serve. Se configurar SMTP (Authentication → Emails), o
+> "Esqueci-me da palavra-passe" e o registo pela própria app passam a ser
+> práticos — o botão **Criar acesso** continua a funcionar de qualquer forma.
+
+O funcionário também pode registar-se sozinho na app ("Primeira vez? Criar a
+minha conta"), desde que use o email que o gestor registou — mas aí depende da
+confirmação por email e do limite acima.
 
 ### 3. Coordenadas e métodos de registo
 

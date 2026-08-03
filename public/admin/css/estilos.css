@@ -350,6 +350,38 @@ tbody tr:hover { background: #FFFAF0; }
   align-items: start;
 }
 
+/* --------------------------- Credenciais --------------------------- */
+.credenciais {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--primaria-clara);
+  border: 1px solid #F0D9AE;
+  border-radius: var(--raio);
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.credencial-rotulo {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 4px;
+}
+
+.credenciais code {
+  display: block;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--texto);
+  word-break: break-all;
+  user-select: all;
+}
+
 /* ------------------------------ Modal ------------------------------ */
 .modal-fundo {
   position: fixed;

@@ -175,6 +175,32 @@ export const actualizarFuncionario = (id, { nome, cargo, horasSemanais, ativo })
     p_ativo: ativo ?? null,
   });
 
+/**
+ * Cria o acesso de um funcionário e devolve a palavra-passe temporária.
+ *
+ * Passa por uma Edge Function porque criar contas exige a chave de
+ * serviço, que nunca pode estar no navegador. A autorização é feita lá,
+ * com o token de quem chama — ver supabase/funcoes/criar-acesso.
+ */
+export async function criarAcesso(funcionarioId) {
+  const { data: sessao } = await supabase().auth.getSession();
+  const config = obterConfig();
+
+  const resposta = await fetch(`${config.url}/functions/v1/criar-acesso`, {
+    method: 'POST',
+    headers: {
+      apikey: config.chaveAnon,
+      Authorization: `Bearer ${sessao.session?.access_token ?? ''}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ funcionario_id: funcionarioId }),
+  });
+
+  const corpo = await resposta.json().catch(() => ({}));
+  if (!resposta.ok) throw new Error(corpo.erro || corpo.message || 'Não foi possível criar o acesso.');
+  return corpo;
+}
+
 export async function obterHorario(funcionarioId) {
   const { data, error } = await supabase()
     .from('horarios_esperados')

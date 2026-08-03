@@ -1,5 +1,6 @@
 import {
   actualizarFuncionario,
+  criarAcesso,
   criarFuncionario,
   definirHorario,
   listarFuncionarios,
@@ -52,6 +53,32 @@ export default async function renderFuncionarios(container, ctx) {
     })
   );
 
+  container.querySelectorAll('[data-acesso]').forEach((b) =>
+    b.addEventListener('click', async () => {
+      const f = funcionarios.find((x) => x.id === b.dataset.acesso);
+
+      const ok = await confirmar(
+        'Criar acesso',
+        `Vai ser criada a conta de ${f.nome} e uma palavra-passe para lhe entregar. `
+          + 'Não é enviado nenhum email.',
+        'Criar'
+      );
+      if (!ok) return;
+
+      b.disabled = true;
+      b.textContent = 'A criar…';
+
+      try {
+        const acesso = await criarAcesso(f.id);
+        mostrarAcesso(acesso, container, ctx);
+      } catch (e) {
+        notificar(mensagemDeErro(e), 'erro');
+        b.disabled = false;
+        b.textContent = 'Criar acesso';
+      }
+    })
+  );
+
   container.querySelectorAll('[data-horario]').forEach((b) =>
     b.addEventListener('click', () => {
       const f = funcionarios.find((x) => x.id === b.dataset.horario);
@@ -93,11 +120,13 @@ function linha(f) {
       <td class="numero">${f.horas_semanais_esperadas ?? 40}</td>
       <td>${f.user_id
         ? '<span class="etiqueta etiqueta-dentro">Activada</span>'
-        : '<span class="etiqueta etiqueta-fora">Por activar</span>'}</td>
+        : '<span class="etiqueta etiqueta-fora">Sem acesso</span>'}</td>
       <td>${f.ativo
         ? '<span class="etiqueta etiqueta-primaria">Activo</span>'
         : '<span class="etiqueta etiqueta-fora">Inactivo</span>'}</td>
       <td class="accoes">
+        ${f.user_id ? '' :
+          `<button type="button" class="botao botao-texto botao-pequeno" data-acesso="${f.id}">Criar acesso</button>`}
         <button type="button" class="botao botao-texto botao-pequeno" data-editar="${f.id}">Editar</button>
         <button type="button" class="botao botao-texto botao-pequeno" data-horario="${f.id}">Horário</button>
         <button type="button" class="botao botao-texto botao-pequeno" data-alternar="${f.id}">
@@ -106,6 +135,60 @@ function linha(f) {
       </td>
     </tr>
   `;
+}
+
+// ---------------------------------------------------------------------
+// Acesso criado — mostrar a palavra-passe para entregar
+// ---------------------------------------------------------------------
+function mostrarAcesso(acesso, container, ctx) {
+  const modal = abrirModal(`
+    <h2>Acesso criado</h2>
+    <p class="nota">
+      Entregue estes dados a <strong>${esc(acesso.nome)}</strong>. Esta palavra-passe
+      só é mostrada <strong>agora</strong> — depois de fechar não há como a ver outra
+      vez, só criar uma nova.
+    </p>
+
+    <div class="credenciais">
+      <div>
+        <span class="credencial-rotulo">Email</span>
+        <code id="cred-email">${esc(acesso.email)}</code>
+      </div>
+      <div>
+        <span class="credencial-rotulo">Palavra-passe</span>
+        <code id="cred-pw">${esc(acesso.palavra_passe)}</code>
+      </div>
+    </div>
+
+    <p class="nota" style="margin-top:14px">
+      Peça-lhe que a mude assim que entrar, em "Esqueci-me da palavra-passe".
+    </p>
+
+    <div class="modal-accoes">
+      <button type="button" class="botao botao-secundario" id="copiar">Copiar</button>
+      <button type="button" class="botao botao-primario" data-fechar>Já anotei</button>
+    </div>
+  `);
+
+  modal.querySelector('#copiar').addEventListener('click', async () => {
+    const texto = `Salinas — registo de ponto\n`
+      + `Endereço: ${location.origin}${location.pathname.replace(/admin\/$/, '')}\n`
+      + `Email: ${acesso.email}\n`
+      + `Palavra-passe: ${acesso.palavra_passe}`;
+    try {
+      await navigator.clipboard.writeText(texto);
+      notificar('Copiado. Cole numa mensagem para o funcionário.', 'sucesso');
+    } catch {
+      notificar('O navegador não deixou copiar. Anote à mão.', 'erro');
+    }
+  });
+
+  document.getElementById('modal-fundo').addEventListener('click', function aoFechar(e) {
+    if (e.target.id === 'modal-fundo' || e.target.hasAttribute('data-fechar')) {
+      document.getElementById('modal-fundo').removeEventListener('click', aoFechar);
+      renderFuncionarios(container, ctx);
+    }
+  });
 }
 
 // ---------------------------------------------------------------------
