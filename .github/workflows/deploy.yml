@@ -36,16 +36,41 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Recusar credenciais commitadas
+      - name: Recusar credenciais perigosas
         run: |
-          # As chaves do Supabase são JWT e começam sempre por este prefixo.
-          # Procurar a palavra "service_role" não serviria: dentro da chave
-          # ela vai codificada em base64, e aparece legitimamente no código
-          # que avisa o utilizador de que escolheu a chave errada.
-          if grep -rn "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" public/ ; then
-            echo "::error::Parece haver uma chave do Supabase commitada em public/. Use os secrets do repositório."
-            exit 1
-          fi
+          # A chave `anon` é pública por desenho — vive no JavaScript de
+          # qualquer app Supabase e está sempre limitada pelo RLS. O que não
+          # pode mesmo aparecer é a `service_role`, que ignora o RLS por
+          # completo. Por isso a guarda não é "há aqui um JWT?", mas sim
+          # "que papel tem este JWT?".
+          node -e '
+            const { execSync } = require("child_process");
+            let achados = "";
+            try {
+              achados = execSync(
+                "grep -rhoE \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\" public/ || true",
+                { encoding: "utf8" }
+              );
+            } catch {}
+
+            const chaves = [...new Set(achados.split("\n").filter(Boolean))];
+            let mau = false;
+
+            for (const chave of chaves) {
+              let papel = "ilegível";
+              try {
+                papel = JSON.parse(Buffer.from(chave.split(".")[1], "base64url").toString()).role;
+              } catch {}
+              if (papel === "anon") {
+                console.log(`  chave anon encontrada (pública por desenho): ${chave.slice(0, 24)}…`);
+              } else {
+                console.error(`::error::Chave com role="${papel}" commitada em public/. Só a anon pode ir para o frontend.`);
+                mau = true;
+              }
+            }
+            if (mau) process.exit(1);
+            if (!chaves.length) console.log("  nenhuma chave embutida");
+          '
 
       - name: Confirmar que não há dependências de CDN
         run: |

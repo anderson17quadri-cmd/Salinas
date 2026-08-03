@@ -158,7 +158,12 @@ O Pages serve tudo em **HTTPS**, que é obrigatório para a câmara e o GPS
 funcionarem no browser.
 
 > **Nunca** use a chave `service_role` em nenhum destes sítios — ignora o RLS
-> por completo. O workflow recusa o deploy se a encontrar.
+> por completo. O workflow descodifica qualquer chave que encontre em `public/`
+> e recusa o deploy se o papel não for `anon`.
+
+A chave `anon` **pode** ficar no código: é pública por desenho, vive no
+JavaScript de qualquer app Supabase e está sempre limitada pelo RLS. Tê-la
+embutida evita o ecrã de configuração aparecer aos funcionários.
 
 **Sem secrets configurados** o site continua a funcionar: pede o URL e a chave
 na primeira utilização e guarda-os no navegador. Também pode partilhar um link

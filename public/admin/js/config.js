@@ -13,8 +13,8 @@
  */
 
 const INJECTADO = {
-  url: '__SUPABASE_URL__',
-  chaveAnon: '__SUPABASE_ANON_KEY__',
+  url: 'https://umcvkhzvyffekpgxcvwi.supabase.co',
+  chaveAnon: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtY3ZraHp2eWZmZWtwZ3hjdndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NTgwMDMsImV4cCI6MjEwMTMzNDAwM30.Z4TR3T4gfATGLNYd1O-4CnS5Z4fvFkvguSVBTcc5M5k',
 };
 
 const CHAVE_ARMAZENAMENTO = 'salinas.config';
