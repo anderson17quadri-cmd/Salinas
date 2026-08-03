@@ -125,6 +125,11 @@ select id, 'Anderson', 'admin@exemplo.pt' from empresas where nome = 'Pastelaria
 Depois, em **Authentication → Users**, crie a conta com esse email. O trigger
 `on_auth_user_created` liga automaticamente a conta ao registo de admin.
 
+A palavra-passe define-se pela própria app: em **Authentication → URL
+Configuration**, ponha o endereço publicado em *Site URL* e em *Redirect URLs*,
+e use "Esqueci-me da palavra-passe" no ecrã de entrada. O link do email abre o
+ecrã **Definir palavra-passe** — é o mesmo caminho para os funcionários.
+
 Os funcionários criam-se pelo painel (**Funcionários → Novo funcionário**).
 Para cada um, crie também a conta em Authentication → Users com o mesmo email —
 ou peça-lhes que usem "Esqueci-me da palavra-passe" na app para a definirem.
