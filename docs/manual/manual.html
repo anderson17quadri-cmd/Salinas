@@ -2,193 +2,467 @@
 <html lang="pt-PT">
 <head>
 <meta charset="utf-8">
-<title>Salinas — Manual de utilização</title>
+<title>Salinas — Manual</title>
 <style>
-/* Manual passo-a-passo, sem mais nada à volta. Fonte deste ficheiro é
-   este HTML; o PDF é gerado a partir dele (ver README ao lado). */
-
-@page { size: A4; margin: 16mm 16mm 18mm; }
-
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  font-family: "Segoe UI", -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
-  color: #1E1A14;
-  font-size: 12pt;
-  line-height: 1.5;
-  background: #fff;
+:root{
+  --laranja:#F5A323;
+  --laranja-escuro:#B8790C;
+  --tinta:#15120C;
+  --fundo:#FFFBF4;
+  --cartao:#FFFFFF;
+  --texto:#221D15;
+  --texto-suave:#746B5C;
+  --borda:#E7DECD;
+  --sombra: 0 10px 30px -12px rgba(30,20,5,.25);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --tinta:#0E0C08;
+    --fundo:#171310;
+    --cartao:#221D16;
+    --texto:#F1E9DA;
+    --texto-suave:#B3A78E;
+    --borda:#3A3223;
+    --sombra: 0 10px 30px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --tinta:#0E0C08; --fundo:#171310; --cartao:#221D16; --texto:#F1E9DA;
+  --texto-suave:#B3A78E; --borda:#3A3223; --sombra: 0 10px 30px -12px rgba(0,0,0,.6);
+}
+:root[data-theme="light"]{
+  --tinta:#15120C; --fundo:#FFFBF4; --cartao:#FFFFFF; --texto:#221D15;
+  --texto-suave:#746B5C; --borda:#E7DECD; --sombra: 0 10px 30px -12px rgba(30,20,5,.25);
 }
 
-:root {
-  --laranja: #F5A323;
-  --tinta: #12100C;
-  --texto-suave: #6B6357;
-  --borda: #E6DCCB;
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--fundo);
+  color:var(--texto);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  line-height:1.55;
+}
+::selection{background:var(--laranja);color:var(--tinta)}
+
+a{color:var(--laranja-escuro)}
+code{
+  font-family:"SF Mono",Consolas,monospace;
+  background:var(--cartao);
+  border:1px solid var(--borda);
+  padding:.1em .45em;
+  border-radius:5px;
+  font-size:.92em;
 }
 
-.capa {
-  height: 251mm;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  page-break-after: always;
+/* -------------------------- barra fixa -------------------------- */
+.barra{
+  position:sticky; top:0; z-index:20;
+  display:flex; align-items:center; gap:16px;
+  padding:10px 20px;
+  background:color-mix(in srgb, var(--fundo) 88%, transparent);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--borda);
 }
-.capa img { width: 100mm; }
-.capa h1 { font-size: 34pt; margin: 12mm 0 2mm; }
-.capa p { font-size: 14pt; color: var(--texto-suave); margin: 0; }
-.capa .links { margin-top: 14mm; font-size: 11pt; }
-.capa .links b { display: block; margin-top: 3mm; }
-
-.parte {
-  page-break-before: always;
-  background: var(--tinta);
-  color: #fff;
-  padding: 8mm 10mm;
-  border-radius: 5mm;
-  text-align: center;
-  margin-bottom: 6mm;
+.barra .marca{
+  display:flex; align-items:center; gap:10px;
+  font-weight:800; font-size:1.05rem; letter-spacing:-.01em;
+  margin-right:auto;
 }
-.parte h1 { font-size: 24pt; margin: 0; }
-.parte p { color: var(--laranja); margin: 2mm 0 0; font-weight: 600; }
-
-.passo {
-  page-break-inside: avoid;
-  margin: 8mm 0;
+.marca .ponto{width:9px;height:9px;border-radius:50%;background:var(--laranja)}
+.abas{display:flex; gap:6px; background:var(--cartao); border:1px solid var(--borda); padding:4px; border-radius:999px}
+.abas a{
+  text-decoration:none; color:var(--texto-suave); font-weight:700; font-size:.86rem;
+  padding:7px 16px; border-radius:999px; transition:background .15s, color .15s;
+  text-transform:uppercase; letter-spacing:.04em;
 }
-.passo h2 {
-  font-size: 15pt;
-  margin: 0 0 3mm;
-  padding-bottom: 2mm;
-  border-bottom: 2pt solid var(--laranja);
+.abas a.activa, .abas a:hover{background:var(--laranja); color:var(--tinta)}
+
+/* ------------------------------ capa ----------------------------- */
+.capa{
+  max-width:900px; margin:0 auto; padding:56px 24px 24px;
+  display:flex; align-items:center; gap:28px;
 }
-.passo p { margin: 2mm 0 3mm; font-size: 11.5pt; }
+.capa .selo{
+  flex:none; width:96px; height:96px; border-radius:26px;
+  background:var(--laranja); display:flex; align-items:center; justify-content:center;
+  box-shadow:var(--sombra);
+}
+.capa .selo img{width:70%}
+.capa h1{font-size:2.1rem; margin:0 0 4px; letter-spacing:-.02em}
+.capa p{margin:0; color:var(--texto-suave); font-size:1.05rem}
 
-img.grande { display: block; margin: 0 auto; border: 1pt solid var(--borda); border-radius: 3mm; }
-.w-tel { width: 62mm; }
-.w-painel { width: 100%; max-width: 165mm; }
+.secao{max-width:900px; margin:0 auto; padding:8px 24px 64px}
+.eyebrow{
+  text-transform:uppercase; letter-spacing:.12em; font-size:.78rem; font-weight:800;
+  color:var(--laranja-escuro); margin:40px 0 6px;
+}
+.secao h2{font-size:1.6rem; margin:0 0 16px; letter-spacing:-.01em}
 
-code {
-  font-family: Consolas, monospace;
-  background: #FDF0DA;
-  padding: 1mm 2mm;
-  border-radius: 1.5mm;
+.beneficios{
+  list-style:none; margin:0 0 32px; padding:0;
+  display:grid; gap:10px;
+}
+.beneficios li{
+  position:relative; padding-left:26px; color:var(--texto); max-width:56ch;
+}
+.beneficios li::before{
+  content:"✓"; position:absolute; left:0; top:0;
+  color:var(--laranja-escuro); font-weight:800;
+}
+.ver-funcionalidades{
+  display:inline-flex; align-items:center; gap:6px;
+  text-decoration:none; font-weight:700; font-size:.9rem;
+  color:var(--laranja-escuro); margin-bottom:32px;
+}
+.ver-funcionalidades:hover{text-decoration:underline}
+
+/* ------------------------------ passo ----------------------------- */
+.passo{
+  border-top:1px solid var(--borda);
+  padding:28px 0;
+}
+.passo:first-of-type{border-top:none}
+.passo-cabecalho{display:flex; align-items:baseline; gap:12px; margin-bottom:6px}
+.passo-cabecalho .num{
+  font-weight:800; font-size:.95rem; color:var(--tinta); background:var(--laranja);
+  width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  flex:none;
+}
+.passo-cabecalho h3{margin:0; font-size:1.2rem; letter-spacing:-.01em}
+.passo p{margin:0 0 18px; color:var(--texto); max-width:62ch}
+.passo p b{color:var(--texto)}
+
+/* -------------------------- moldura telefone ----------------------- */
+.moldura-tel{
+  width:min(300px, 100%);
+  background:var(--tinta);
+  border-radius:34px;
+  padding:12px 10px;
+  box-shadow:var(--sombra);
+  position:relative;
+}
+.moldura-tel .entalhe{
+  position:absolute; top:12px; left:50%; transform:translateX(-50%);
+  width:70px; height:16px; background:var(--tinta); border-radius:0 0 10px 10px;
+  z-index:2;
+}
+.moldura-tel::before{
+  content:""; position:absolute; top:22px; left:50%; transform:translateX(-50%);
+  width:50px; height:5px; border-radius:3px; background:#000; opacity:.55; z-index:3;
+}
+.moldura-tel img{
+  display:block; width:100%; border-radius:22px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.35);
+}
+
+/* --------------------------- moldura painel ------------------------- */
+.moldura-nav{
+  width:100%;
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:var(--sombra);
+  border:1px solid var(--borda);
+}
+.barra-nav{
+  display:flex; align-items:center; gap:8px;
+  background:var(--tinta); padding:10px 14px;
+}
+.bola{width:10px;height:10px;border-radius:50%; flex:none}
+.b1{background:#EC6A5E} .b2{background:#F4BF4F} .b3{background:#61C355}
+.barra-nav .url{
+  margin-left:10px; color:#C9C2B2; font-size:.78rem;
+  font-family:"SF Mono",Consolas,monospace;
+  background:rgba(255,255,255,.06); padding:3px 10px; border-radius:6px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.tela-scroll{overflow-x:auto; background:var(--cartao)}
+.tela-scroll img{display:block; width:100%; min-width:640px}
+
+@media (max-width:640px){
+  .capa{flex-direction:column; text-align:center}
+  .barra{flex-direction:column; align-items:stretch; gap:10px}
+  .barra .marca{margin:0; justify-content:center}
+  .abas{justify-content:center}
+}
+
+@media print{
+  @page{ size:A4; margin:14mm 14mm 16mm; }
+  .barra{ display:none; }
+  .ver-funcionalidades{ display:none; }
+  .capa{ padding-top:0; }
+  #gestor{ page-break-before:always; }
+  .passo{ page-break-inside:avoid; }
+  .beneficios{ page-break-inside:avoid; }
+  .moldura-tel, .moldura-nav{ box-shadow:none; }
+  .tela-scroll{ overflow:visible; }
+  .tela-scroll img{ min-width:0; }
 }
 </style>
 </head>
 <body>
 
-<section class="capa">
-  <img src="imagens/logo.png" alt="Pastelaria Salinas">
-  <h1>Salinas</h1>
-  <p>Manual de utilização — registo de ponto</p>
-  <div class="links">
-    App do funcionário<b>anderson17quadri-cmd.github.io/Salinas/</b>
-    Painel do gestor<b>anderson17quadri-cmd.github.io/Salinas/admin/</b>
+<div class="barra">
+  <div class="marca"><span class="ponto"></span>Salinas — Manual</div>
+  <nav class="abas">
+    <a href="#funcionario">Funcionário</a>
+    <a href="#gestor">Gestor</a>
+  </nav>
+</div>
+
+<div class="capa">
+  <div class="selo"><img src="imagens/logo.png" alt="Salinas"></div>
+  <div>
+    <h1>Manual de utilização</h1>
+    <p>Registo de ponto da Pastelaria Salinas</p>
   </div>
+</div>
+
+<section class="secao" id="funcionario">
+  <div class="eyebrow">Para o funcionário</div>
+  <h2>O que ganha</h2>
+  <ul class="beneficios"><li>Bate o ponto em segundos, com o telemóvel que já tem no bolso.</li><li>Vê sempre quanto já trabalhou e o saldo do banco de horas.</li><li>Justifica uma falta em dois toques, sem papéis.</li></ul>
+  <div class="eyebrow">Passo a passo</div>
+  
+    <article class="passo" id="f-1">
+      <div class="passo-cabecalho">
+        <span class="num">1</span>
+        <h3>Instalar a app</h3>
+      </div>
+      <p>Abra <code>anderson17quadri-cmd.github.io/Salinas/</code> no telemóvel. No Android, três pontinhos → <b>Instalar aplicação</b>. No iPhone, botão de partilha → <b>Adicionar ao ecrã principal</b>.</p>
+      
+    </article>
+
+    <article class="passo" id="f-2">
+      <div class="passo-cabecalho">
+        <span class="num">2</span>
+        <h3>Entrar</h3>
+      </div>
+      <p>Escreva o email e a palavra-passe que o gestor lhe deu.</p>
+      
+  <div class="moldura-tel">
+    <div class="entalhe"></div>
+    <img src="imagens/app-login.png" alt="">
+  </div>
+    </article>
+
+    <article class="passo" id="f-3">
+      <div class="passo-cabecalho">
+        <span class="num">3</span>
+        <h3>Bater ponto</h3>
+      </div>
+      <p>Toque no botão laranja. Depois em <b>Ler QR code</b> (aponte ao cartaz) ou <b>Usar GPS</b>.</p>
+      
+  <div class="moldura-tel">
+    <div class="entalhe"></div>
+    <img src="imagens/app-inicio.png" alt="">
+  </div>
+    </article>
+
+    <article class="passo" id="f-4">
+      <div class="passo-cabecalho">
+        <span class="num">4</span>
+        <h3>Histórico e banco de horas</h3>
+      </div>
+      <p>No separador <b>Histórico</b> vê os registos e o saldo de horas.</p>
+      
+  <div class="moldura-tel">
+    <div class="entalhe"></div>
+    <img src="imagens/app-historico.png" alt="">
+  </div>
+    </article>
+
+    <article class="passo" id="f-5">
+      <div class="passo-cabecalho">
+        <span class="num">5</span>
+        <h3>Justificar uma falta</h3>
+      </div>
+      <p>No separador <b>Faltas</b>, toque em «Nova justificação».</p>
+      
+  <div class="moldura-tel">
+    <div class="entalhe"></div>
+    <img src="imagens/app-faltas.png" alt="">
+  </div>
+    </article>
 </section>
 
-<!-- ===================== PARTE 1 — FUNCIONÁRIO ===================== -->
-<section class="parte"><h1>Para o funcionário</h1></section>
+<section class="secao" id="gestor">
+  <div class="eyebrow">Para o gestor</div>
+  <h2>O que ganha</h2>
+  <ul class="beneficios"><li>Vê quem está a trabalhar agora, sem sair do balcão.</li><li>Fecha o mês em minutos — relatório e CSV já vêm prontos.</li><li>A escala 6x2? O sistema distingue folga de falta sozinho.</li></ul>
+  <a class="ver-funcionalidades" href="https://claude.ai/code/artifact/c00cd4cb-be54-455a-8166-a8509f045c68">Ver todas as funcionalidades explicadas →</a>
+  <div class="eyebrow">Passo a passo</div>
+  
+    <article class="passo" id="g-1">
+      <div class="passo-cabecalho">
+        <span class="num">1</span>
+        <h3>Entrar no painel</h3>
+      </div>
+      <p>Abra <code>anderson17quadri-cmd.github.io/Salinas/admin/</code> e entre com a sua conta de gestor.</p>
+      
+    </article>
 
-<div class="passo">
-  <h2>1. Instalar a app</h2>
-  <p>Abra <code>anderson17quadri-cmd.github.io/Salinas/</code> no telemóvel. Android: três pontinhos → «Instalar aplicação». iPhone: botão de partilha → «Adicionar ao ecrã principal».</p>
-</div>
+    <article class="passo" id="g-2">
+      <div class="passo-cabecalho">
+        <span class="num">2</span>
+        <h3>Dashboard</h3>
+      </div>
+      <p>Quem está ao serviço, atrasos e justificações pendentes.</p>
+      
+  <div class="moldura-nav">
+    <div class="barra-nav">
+      <span class="bola b1"></span><span class="bola b2"></span><span class="bola b3"></span>
+      <span class="url">anderson17quadri-cmd.github.io/Salinas/admin/#/dashboard</span>
+    </div>
+    <div class="tela-scroll"><img src="imagens/painel-dashboard.png" alt=""></div>
+  </div>
+    </article>
 
-<div class="passo">
-  <h2>2. Entrar</h2>
-  <p>Escreva o email e a palavra-passe que o gestor lhe deu.</p>
-  <img class="grande w-tel" src="imagens/app-login.png" alt="Ecrã de entrada">
-</div>
+    <article class="passo" id="g-3">
+      <div class="passo-cabecalho">
+        <span class="num">3</span>
+        <h3>Registar um funcionário</h3>
+      </div>
+      <p><b>Funcionários → Novo funcionário.</b></p>
+      
+  <div class="moldura-nav">
+    <div class="barra-nav">
+      <span class="bola b1"></span><span class="bola b2"></span><span class="bola b3"></span>
+      <span class="url">anderson17quadri-cmd.github.io/Salinas/admin/#/funcionarios</span>
+    </div>
+    <div class="tela-scroll"><img src="imagens/painel-funcionarios.png" alt=""></div>
+  </div>
+    </article>
 
-<div class="passo">
-  <h2>3. Bater ponto</h2>
-  <p>Toque no botão laranja. Depois em «Ler QR code» (aponte ao cartaz) ou «Usar GPS».</p>
-  <img class="grande w-tel" src="imagens/app-inicio.png" alt="Ecrã inicial">
-</div>
+    <article class="passo" id="g-4">
+      <div class="passo-cabecalho">
+        <span class="num">4</span>
+        <h3>Criar o acesso</h3>
+      </div>
+      <p>Clique em <b>Criar acesso</b> e entregue a palavra-passe em mão.</p>
+      
+  <div class="moldura-nav">
+    <div class="barra-nav">
+      <span class="bola b1"></span><span class="bola b2"></span><span class="bola b3"></span>
+      <span class="url">anderson17quadri-cmd.github.io/Salinas/admin/#/funcionarios</span>
+    </div>
+    <div class="tela-scroll"><img src="imagens/painel-acesso-criado.png" alt=""></div>
+  </div>
+    </article>
 
-<div class="passo">
-  <h2>4. Histórico e banco de horas</h2>
-  <p>No separador Histórico vê os registos e o saldo de horas.</p>
-  <img class="grande w-tel" src="imagens/app-historico.png" alt="Histórico">
-</div>
+    <article class="passo" id="g-5">
+      <div class="passo-cabecalho">
+        <span class="num">5</span>
+        <h3>Definir o horário</h3>
+      </div>
+      <p>Clique em <b>Horário</b> e escolha o turno: Manhã (06:00–14:00), Pão (11:00–19:00) ou Noite (18:00–02:00).</p>
+      
+  <div class="moldura-nav">
+    <div class="barra-nav">
+      <span class="bola b1"></span><span class="bola b2"></span><span class="bola b3"></span>
+      <span class="url">anderson17quadri-cmd.github.io/Salinas/admin/#/funcionarios</span>
+    </div>
+    <div class="tela-scroll"><img src="imagens/painel-turnos.png" alt=""></div>
+  </div>
+    </article>
 
-<div class="passo">
-  <h2>5. Justificar uma falta</h2>
-  <p>No separador Faltas, toque em «Nova justificação».</p>
-  <img class="grande w-tel" src="imagens/app-faltas.png" alt="Faltas">
-</div>
+    <article class="passo" id="g-6">
+      <div class="passo-cabecalho">
+        <span class="num">6</span>
+        <h3>QR code</h3>
+      </div>
+      <p>Descarregue o cartaz A4 e afixe na pastelaria.</p>
+      
+  <div class="moldura-nav">
+    <div class="barra-nav">
+      <span class="bola b1"></span><span class="bola b2"></span><span class="bola b3"></span>
+      <span class="url">anderson17quadri-cmd.github.io/Salinas/admin/#/qrcode</span>
+    </div>
+    <div class="tela-scroll"><img src="imagens/painel-qrcode.png" alt=""></div>
+  </div>
+    </article>
 
-<!-- ======================= PARTE 2 — GESTOR ========================= -->
-<section class="parte"><h1>Para o gestor</h1></section>
+    <article class="passo" id="g-7">
+      <div class="passo-cabecalho">
+        <span class="num">7</span>
+        <h3>Registos</h3>
+      </div>
+      <p>Tudo o que foi marcado, com filtros por pessoa, tipo e data.</p>
+      
+  <div class="moldura-nav">
+    <div class="barra-nav">
+      <span class="bola b1"></span><span class="bola b2"></span><span class="bola b3"></span>
+      <span class="url">anderson17quadri-cmd.github.io/Salinas/admin/#/registos</span>
+    </div>
+    <div class="tela-scroll"><img src="imagens/painel-registos.png" alt=""></div>
+  </div>
+    </article>
 
-<div class="passo">
-  <h2>1. Entrar no painel</h2>
-  <p>Abra <code>anderson17quadri-cmd.github.io/Salinas/admin/</code> e entre com a sua conta de gestor.</p>
-</div>
+    <article class="passo" id="g-8">
+      <div class="passo-cabecalho">
+        <span class="num">8</span>
+        <h3>Justificações</h3>
+      </div>
+      <p>Aprove ou recuse os pedidos de falta da equipa.</p>
+      
+  <div class="moldura-nav">
+    <div class="barra-nav">
+      <span class="bola b1"></span><span class="bola b2"></span><span class="bola b3"></span>
+      <span class="url">anderson17quadri-cmd.github.io/Salinas/admin/#/justificacoes</span>
+    </div>
+    <div class="tela-scroll"><img src="imagens/painel-justificacoes.png" alt=""></div>
+  </div>
+    </article>
 
-<div class="passo">
-  <h2>2. Dashboard</h2>
-  <p>Quem está ao serviço, atrasos e justificações pendentes.</p>
-  <img class="grande w-painel" src="imagens/painel-dashboard.png" alt="Dashboard">
-</div>
+    <article class="passo" id="g-9">
+      <div class="passo-cabecalho">
+        <span class="num">9</span>
+        <h3>Banco de horas</h3>
+      </div>
+      <p>No início do mês, clique em <b>Fechar período</b>.</p>
+      
+  <div class="moldura-nav">
+    <div class="barra-nav">
+      <span class="bola b1"></span><span class="bola b2"></span><span class="bola b3"></span>
+      <span class="url">anderson17quadri-cmd.github.io/Salinas/admin/#/banco-horas</span>
+    </div>
+    <div class="tela-scroll"><img src="imagens/painel-banco-horas.png" alt=""></div>
+  </div>
+    </article>
 
-<div class="passo">
-  <h2>3. Registar um funcionário</h2>
-  <p><b>Funcionários → Novo funcionário.</b></p>
-  <img class="grande w-painel" src="imagens/painel-funcionarios.png" alt="Funcionários">
-</div>
+    <article class="passo" id="g-10">
+      <div class="passo-cabecalho">
+        <span class="num">10</span>
+        <h3>Relatório mensal</h3>
+      </div>
+      <p>Horas trabalhadas e esperadas, por pessoa. <b>Exportar CSV</b> para a contabilidade.</p>
+      
+  <div class="moldura-nav">
+    <div class="barra-nav">
+      <span class="bola b1"></span><span class="bola b2"></span><span class="bola b3"></span>
+      <span class="url">anderson17quadri-cmd.github.io/Salinas/admin/#/relatorio</span>
+    </div>
+    <div class="tela-scroll"><img src="imagens/painel-relatorio.png" alt=""></div>
+  </div>
+    </article>
 
-<div class="passo">
-  <h2>4. Criar o acesso</h2>
-  <p>Clique em <b>Criar acesso</b> e entregue a palavra-passe em mão.</p>
-  <img class="grande w-painel" src="imagens/painel-acesso-criado.png" alt="Acesso criado">
-</div>
-
-<div class="passo">
-  <h2>5. Definir o horário</h2>
-  <p>Clique em <b>Horário</b> e escolha o turno: Manhã (06:00–14:00), Pão (11:00–19:00) ou Noite (18:00–02:00).</p>
-  <img class="grande w-painel" src="imagens/painel-turnos.png" alt="Turnos">
-</div>
-
-<div class="passo">
-  <h2>6. QR code</h2>
-  <p>Descarregue o cartaz A4 e afixe na pastelaria.</p>
-  <img class="grande w-painel" src="imagens/painel-qrcode.png" alt="QR code">
-</div>
-
-<div class="passo">
-  <h2>7. Registos</h2>
-  <p>Tudo o que foi marcado, com filtros por pessoa, tipo e data.</p>
-  <img class="grande w-painel" src="imagens/painel-registos.png" alt="Registos">
-</div>
-
-<div class="passo">
-  <h2>8. Justificações</h2>
-  <p>Aprove ou recuse os pedidos de falta da equipa.</p>
-  <img class="grande w-painel" src="imagens/painel-justificacoes.png" alt="Justificações">
-</div>
-
-<div class="passo">
-  <h2>9. Banco de horas</h2>
-  <p>No início do mês, clique em <b>Fechar período</b>.</p>
-  <img class="grande w-painel" src="imagens/painel-banco-horas.png" alt="Banco de horas">
-</div>
-
-<div class="passo">
-  <h2>10. Relatório mensal</h2>
-  <p>Horas trabalhadas e esperadas, por pessoa. <b>Exportar CSV</b> para a contabilidade.</p>
-  <img class="grande w-painel" src="imagens/painel-relatorio.png" alt="Relatório mensal">
-</div>
-
-<div class="passo">
-  <h2>11. Definições</h2>
-  <p>Morada, raio do GPS, métodos de registo e regime de folgas.</p>
-  <img class="grande w-painel" src="imagens/painel-definicoes.png" alt="Definições">
-</div>
+    <article class="passo" id="g-11">
+      <div class="passo-cabecalho">
+        <span class="num">11</span>
+        <h3>Definições</h3>
+      </div>
+      <p>Morada, raio do GPS, métodos de registo e regime de folgas.</p>
+      
+  <div class="moldura-nav">
+    <div class="barra-nav">
+      <span class="bola b1"></span><span class="bola b2"></span><span class="bola b3"></span>
+      <span class="url">anderson17quadri-cmd.github.io/Salinas/admin/#/definicoes</span>
+    </div>
+    <div class="tela-scroll"><img src="imagens/painel-definicoes.png" alt=""></div>
+  </div>
+    </article>
+</section>
 
 </body>
 </html>

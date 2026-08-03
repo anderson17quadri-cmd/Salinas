@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<title>Salinas — Funcionalidades</title>
+<style>
+:root{
+  --laranja:#F5A323;
+  --laranja-escuro:#B8790C;
+  --tinta:#15120C;
+  --fundo:#FFFBF4;
+  --cartao:#FFFFFF;
+  --texto:#221D15;
+  --texto-suave:#746B5C;
+  --borda:#E7DECD;
+  --sombra: 0 14px 34px -14px rgba(30,20,5,.28);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --tinta:#0E0C08; --fundo:#171310; --cartao:#221D16; --texto:#F1E9DA;
+    --texto-suave:#B3A78E; --borda:#3A3223; --sombra: 0 14px 34px -14px rgba(0,0,0,.65);
+  }
+}
+:root[data-theme="dark"]{
+  --tinta:#0E0C08; --fundo:#171310; --cartao:#221D16; --texto:#F1E9DA;
+  --texto-suave:#B3A78E; --borda:#3A3223; --sombra: 0 14px 34px -14px rgba(0,0,0,.65);
+}
+:root[data-theme="light"]{
+  --tinta:#15120C; --fundo:#FFFBF4; --cartao:#FFFFFF; --texto:#221D15;
+  --texto-suave:#746B5C; --borda:#E7DECD; --sombra: 0 14px 34px -14px rgba(30,20,5,.28);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--fundo); color:var(--texto);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  line-height:1.55;
+}
+a{color:var(--laranja-escuro)}
+
+.barra{
+  position:sticky; top:0; z-index:20;
+  display:flex; align-items:center; gap:16px; padding:10px 20px;
+  background:color-mix(in srgb, var(--fundo) 88%, transparent);
+  backdrop-filter:blur(10px); border-bottom:1px solid var(--borda);
+}
+.barra .marca{display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.05rem; margin-right:auto}
+.marca .ponto{width:9px;height:9px;border-radius:50%;background:var(--laranja)}
+.barra a.voltar{
+  text-decoration:none; font-weight:700; font-size:.86rem; color:var(--texto-suave);
+  border:1px solid var(--borda); padding:7px 14px; border-radius:999px;
+}
+.barra a.voltar:hover{color:var(--laranja-escuro); border-color:var(--laranja-escuro)}
+
+.hero{max-width:900px; margin:0 auto; padding:52px 24px 8px}
+.hero .selo{
+  width:64px; height:64px; border-radius:18px; background:var(--laranja);
+  display:flex; align-items:center; justify-content:center; box-shadow:var(--sombra); margin-bottom:20px;
+}
+.hero .selo img{width:70%}
+.hero h1{font-size:2.15rem; margin:0 0 8px; letter-spacing:-.02em; max-width:16ch}
+.hero p{color:var(--texto-suave); font-size:1.12rem; max-width:56ch; margin:0}
+
+.lista{max-width:900px; margin:0 auto; padding:24px 24px 72px}
+
+.item{
+  display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center;
+  padding:44px 0; border-top:1px solid var(--borda);
+}
+.item:first-of-type{border-top:none; padding-top:24px}
+.item.inverso .texto{order:2}
+.item.inverso .visual{order:1}
+
+.eyebrow{
+  text-transform:uppercase; letter-spacing:.1em; font-size:.74rem; font-weight:800;
+  color:var(--laranja-escuro); margin:0 0 8px;
+}
+.item h2{font-size:1.4rem; margin:0 0 10px; letter-spacing:-.01em}
+.item p{margin:0; color:var(--texto); max-width:42ch}
+
+.moldura-nav{border-radius:12px; overflow:hidden; box-shadow:var(--sombra); border:1px solid var(--borda)}
+.barra-nav{display:flex; align-items:center; gap:7px; background:var(--tinta); padding:9px 12px}
+.bola{width:9px;height:9px;border-radius:50%; flex:none}
+.b1{background:#EC6A5E} .b2{background:#F4BF4F} .b3{background:#61C355}
+.barra-nav .url{
+  margin-left:8px; color:#C9C2B2; font-size:.72rem; font-family:"SF Mono",Consolas,monospace;
+  background:rgba(255,255,255,.06); padding:2px 8px; border-radius:5px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.tela-scroll{overflow-x:auto; background:var(--cartao)}
+.tela-scroll img{display:block; width:100%; min-width:420px}
+
+.rodape{
+  max-width:900px; margin:0 auto; padding:8px 24px 72px; text-align:center;
+}
+.rodape a{
+  display:inline-block; text-decoration:none; font-weight:800; color:var(--tinta); background:var(--laranja);
+  padding:14px 30px; border-radius:999px; font-size:.98rem;
+}
+
+@media (max-width:760px){
+  .item, .item.inverso{grid-template-columns:1fr}
+  .item .texto, .item.inverso .texto, .item .visual, .item.inverso .visual{order:0}
+}
+</style>
+</head>
+<body>
+
+<div class="barra">
+  <div class="marca"><span class="ponto"></span>Salinas — Funcionalidades</div>
+  <a class="voltar" href="https://claude.ai/code/artifact/5e201abd-ad19-47d8-981c-5c4bbf8ffdf4">← Manual passo a passo</a>
+</div>
+
+<div class="hero">
+  <div class="selo"><img src="imagens/logo.png" alt="Salinas"></div>
+  <h1>O que o Salinas faz por si</h1>
+  <p>Não é só picar o ponto — é saber quem está a trabalhar, fechar o mês em minutos e nunca mais discutir horas a mais ou em falta.</p>
+</div>
+
+<div class="lista">
+  
+  <section class="item">
+    <div class="texto">
+      <div class="eyebrow">Em vez de perguntar à equipa</div>
+      <h2>Sabe quem está cá agora</h2>
+      <p>O dashboard mostra, ao vivo, quem está ao serviço, quem está em pausa e quem chegou atrasado hoje — sem sair do balcão nem interromper ninguém.</p>
+    </div>
+    <div class="visual">
+  <div class="moldura-nav">
+    <div class="barra-nav">
+      <span class="bola b1"></span><span class="bola b2"></span><span class="bola b3"></span>
+      <span class="url">anderson17quadri-cmd.github.io/Salinas/admin/#/dashboard</span>
+    </div>
+    <div class="tela-scroll"><img src="imagens/painel-dashboard.png" alt=""></div>
+  </div></div>
+  </section>
+
+  <section class="item inverso">
+    <div class="texto">
+      <div class="eyebrow">Sem hardware caro</div>
+      <h2>Dois jeitos de bater ponto</h2>
+      <p>QR code afixado na loja, ou GPS. A equipa usa o telemóvel que já tem — não há leitor biométrico para comprar nem terminal para avariar.</p>
+    </div>
+    <div class="visual">
+  <div class="moldura-nav">
+    <div class="barra-nav">
+      <span class="bola b1"></span><span class="bola b2"></span><span class="bola b3"></span>
+      <span class="url">anderson17quadri-cmd.github.io/Salinas/admin/#/qrcode</span>
+    </div>
+    <div class="tela-scroll"><img src="imagens/painel-qrcode.png" alt=""></div>
+  </div></div>
+  </section>
+
+  <section class="item">
+    <div class="texto">
+      <div class="eyebrow">Sem discussões no fim do mês</div>
+      <h2>O banco de horas faz as contas sozinho</h2>
+      <p>Todos os meses o sistema compara o que foi trabalhado com o que estava previsto e actualiza o saldo — crédito ou dívida — sem uma folha de Excel à parte.</p>
+    </div>
+    <div class="visual">
+  <div class="moldura-nav">
+    <div class="barra-nav">
+      <span class="bola b1"></span><span class="bola b2"></span><span class="bola b3"></span>
+      <span class="url">anderson17quadri-cmd.github.io/Salinas/admin/#/banco-horas</span>
+    </div>
+    <div class="tela-scroll"><img src="imagens/painel-banco-horas.png" alt=""></div>
+  </div></div>
+  </section>
+
+  <section class="item inverso">
+    <div class="texto">
+      <div class="eyebrow">Para uma escala 6x2</div>
+      <h2>Sabe distinguir folga de falta</h2>
+      <p>Com o regime rotativo activado, um dia sem ponto batido conta como folga — não como falta — mesmo com a folga a mudar de semana para semana.</p>
+    </div>
+    <div class="visual">
+  <div class="moldura-nav">
+    <div class="barra-nav">
+      <span class="bola b1"></span><span class="bola b2"></span><span class="bola b3"></span>
+      <span class="url">anderson17quadri-cmd.github.io/Salinas/admin/#/funcionarios</span>
+    </div>
+    <div class="tela-scroll"><img src="imagens/painel-turnos.png" alt=""></div>
+  </div></div>
+  </section>
+
+  <section class="item">
+    <div class="texto">
+      <div class="eyebrow">Pronto para a contabilidade</div>
+      <h2>Relatório mensal com um clique</h2>
+      <p>Horas trabalhadas, esperadas e saldo, por pessoa. Exporta em CSV e envia directamente para quem faz a folha de salários.</p>
+    </div>
+    <div class="visual">
+  <div class="moldura-nav">
+    <div class="barra-nav">
+      <span class="bola b1"></span><span class="bola b2"></span><span class="bola b3"></span>
+      <span class="url">anderson17quadri-cmd.github.io/Salinas/admin/#/relatorio</span>
+    </div>
+    <div class="tela-scroll"><img src="imagens/painel-relatorio.png" alt=""></div>
+  </div></div>
+  </section>
+
+  <section class="item inverso">
+    <div class="texto">
+      <div class="eyebrow">Nada de papéis perdidos</div>
+      <h2>Justificações organizadas</h2>
+      <p>Cada pedido de falta chega com data e motivo. Aprova ou recusa num clique, e a resposta aparece logo na app da pessoa.</p>
+    </div>
+    <div class="visual">
+  <div class="moldura-nav">
+    <div class="barra-nav">
+      <span class="bola b1"></span><span class="bola b2"></span><span class="bola b3"></span>
+      <span class="url">anderson17quadri-cmd.github.io/Salinas/admin/#/justificacoes</span>
+    </div>
+    <div class="tela-scroll"><img src="imagens/painel-justificacoes.png" alt=""></div>
+  </div></div>
+  </section>
+
+  <section class="item">
+    <div class="texto">
+      <div class="eyebrow">Sem depender do email</div>
+      <h2>Cria acessos na hora</h2>
+      <p>O envio de emails tem um limite baixo — por isso o acesso de cada funcionário é criado na hora, com uma palavra-passe para entregar em mão.</p>
+    </div>
+    <div class="visual">
+  <div class="moldura-nav">
+    <div class="barra-nav">
+      <span class="bola b1"></span><span class="bola b2"></span><span class="bola b3"></span>
+      <span class="url">anderson17quadri-cmd.github.io/Salinas/admin/#/funcionarios</span>
+    </div>
+    <div class="tela-scroll"><img src="imagens/painel-acesso-criado.png" alt=""></div>
+  </div></div>
+  </section>
+</div>
+
+<div class="rodape">
+  <a href="https://claude.ai/code/artifact/5e201abd-ad19-47d8-981c-5c4bbf8ffdf4">Ver o manual passo a passo →</a>
+</div>
+
+</body>
+</html>
