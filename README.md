@@ -289,7 +289,16 @@ Definido em **Definições → Escala e folgas** (`empresas.regime_folgas`):
   horário e sem ponto **nem justificação** passa a contar como **folga**, não
   como falta; uma justificação nesse dia prova que, afinal, era dia de
   trabalho, e volta a somar às horas esperadas. `dias_folga` aparece à parte
-  no relatório mensal.
+  no relatório mensal. Nos turnos, os botões preenchem os 7 dias.
+
+Nos dois regimes:
+
+- Um dia conta como trabalhado quando tem uma **entrada**. A saída das 02:00
+  de um turno da noite não faz do dia seguinte um dia de trabalho.
+- Um turno conta inteiro no mês em que começou, mesmo que a saída caia no
+  mês seguinte.
+- No mês em curso só contam os dias que já terminaram; hoje só conta depois
+  da entrada.
 
 ---
 

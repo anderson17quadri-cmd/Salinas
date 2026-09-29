@@ -79,7 +79,11 @@ function linha(f, tz) {
       <td>${esc(f.cargo) || '—'}</td>
       <td>${etiquetaEstado(f.estado)}</td>
       <td>${f.ultimo_registo ? esc(f.ultimo_registo_hora) : '—'}</td>
-      <td>${f.entrada_hoje ? esc(f.entrada_hoje_hora) : '<span style="color:var(--texto-suave)">sem entrada</span>'}</td>
+      <td>${f.entrada_hoje
+        ? esc(f.entrada_hoje_hora)
+        : f.estado !== 'fora'
+          ? '<span style="color:var(--texto-suave)">desde ontem</span>'
+          : '<span style="color:var(--texto-suave)">sem entrada</span>'}</td>
       <td>${f.hora_entrada_esperada ? esc(String(f.hora_entrada_esperada).slice(0, 5)) : '—'}</td>
       <td class="numero" style="${corAtraso}">${atraso > 0 ? `${atraso} min` : '—'}</td>
     </tr>

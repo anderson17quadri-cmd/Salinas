@@ -665,8 +665,13 @@ begin
     'fora', (select count(*) from detalhe where estado = 'fora'),
     'atrasos', (select count(*) from detalhe where coalesce(atraso_minutos, 0) > 0),
     'ausentes_com_horario', (
+      -- Quem ainda está no turno da noite de ontem não é ausente, e quem
+      -- só começa mais logo ainda não faltou a nada.
       select count(*) from detalhe
-      where entrada_hoje is null and hora_entrada_esperada is not null
+      where entrada_hoje is null
+        and estado = 'fora'
+        and hora_entrada_esperada is not null
+        and hora_entrada_esperada <= (now() at time zone v_tz)::time
     ),
     'registos_fora_do_raio', (
       select count(*) from registos_ponto
@@ -737,6 +742,17 @@ grant execute on function _duracao_turno(time, time) to authenticated;
 --
 -- Sai `dias_folga` para o relatório poder dizer quantos dias de descanso a
 -- pessoa teve, em vez de os apresentar como ausências.
+--
+-- Um dia "foi trabalhado" quando tem uma **entrada**. Não basta ter um
+-- registo qualquer: o turno da noite deixa a saída das 02:00 no dia
+-- seguinte, e esse dia seguinte pode muito bem ser folga.
+--
+-- Um turno conta inteiro no dia (e no mês) em que começou, mesmo que a
+-- saída caia no mês seguinte.
+--
+-- Num período que ainda está a decorrer só contam os dias que já
+-- terminaram. Hoje só conta se já houve entrada — antes disso não é falta,
+-- nem folga, nem horas em dívida: o dia ainda não acabou.
 drop function if exists _horas_do_periodo(uuid, date, date, text);
 create or replace function _horas_do_periodo(
   p_empresa_id uuid,
@@ -764,7 +780,12 @@ as $$
   func as (
     select * from funcionarios where empresa_id = p_empresa_id
   ),
-  ord as (
+  hoje as (
+    select (now() at time zone p_tz)::date as dia
+  ),
+  -- O evento seguinte é procurado também um pouco para lá do fim do
+  -- período, para o turno que atravessa a meia-noite do último dia.
+  ord_janela as (
     select
       r.funcionario_id,
       r.tipo,
@@ -774,8 +795,13 @@ as $$
       ) as proximo
     from registos_ponto r
     join func f on f.id = r.funcionario_id
-    where (r."timestamp" at time zone p_tz)::date >= p_inicio
-      and (r."timestamp" at time zone p_tz)::date <  p_fim
+    where r."timestamp" >= ((p_inicio - 1)::timestamp at time zone p_tz)
+      and r."timestamp" <  ((p_fim + 2)::timestamp at time zone p_tz)
+  ),
+  ord as (
+    select * from ord_janela o
+    where (o."timestamp" at time zone p_tz)::date >= p_inicio
+      and (o."timestamp" at time zone p_tz)::date <  p_fim
   ),
   trabalhado as (
     select o.funcionario_id, sum(extract(epoch from (o.proximo - o."timestamp")) / 3600.0) as horas
@@ -791,11 +817,11 @@ as $$
   ),
   dias as (
     select d::date as dia, extract(dow from d)::int as dow
-    from generate_series(p_inicio, p_fim - 1, interval '1 day') d
+    from hoje, generate_series(p_inicio, least(p_fim - 1, hoje.dia), interval '1 day') d
   ),
   -- Um dia esperado por cada dia do período em que o funcionário tem
   -- horário definido para aquele dia da semana.
-  previsto_dia as (
+  previsto_dia_todos as (
     select
       h.funcionario_id,
       dias.dia,
@@ -803,6 +829,7 @@ as $$
       exists (
         select 1 from registos_ponto r
         where r.funcionario_id = h.funcionario_id
+          and r.tipo = 'entrada'
           and (r."timestamp" at time zone p_tz)::date = dias.dia
       ) as tem_registo,
       exists (
@@ -815,6 +842,10 @@ as $$
     join horarios_esperados h on h.dia_semana = dias.dow
     join func f on f.id = h.funcionario_id
     where h.hora_entrada is not null and h.hora_saida is not null
+  ),
+  previsto_dia as (
+    select p.* from previsto_dia_todos p, hoje
+    where p.dia < hoje.dia or p.tem_registo
   ),
   -- Em regime rotativo, o dia sem ponto e sem justificação é folga: sai
   -- de cena por completo, não conta horas nem falta.
@@ -862,8 +893,10 @@ as $$
     round(coalesce(t.horas, 0)::numeric, 2),
     round(
       case when ch.funcionario_id is not null then coalesce(e.horas, 0)
-      -- Sem horário definido, estima-se a partir das horas semanais.
-      else f.horas_semanais_esperadas * ((p_fim - p_inicio) / 7.0)
+      -- Sem horário definido, estima-se a partir das horas semanais,
+      -- só sobre os dias já decorridos.
+      else f.horas_semanais_esperadas
+           * (greatest(0, least(p_fim, (select dia from hoje)) - p_inicio) / 7.0)
       end::numeric
     , 2),
     coalesce(en.dias, 0),

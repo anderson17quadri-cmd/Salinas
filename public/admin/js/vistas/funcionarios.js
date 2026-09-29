@@ -310,9 +310,10 @@ async function formularioHorario(f, container, ctx) {
     </div>
 
     <p class="nota" style="margin-top:14px">
-      Os turnos preenchem de segunda a sábado. Depois pode ajustar dia a dia —
-      deixe vazio para marcar folga. O turno da noite passa a meia-noite e é
-      contado como 8 horas, não como negativo.
+      ${ctx.empresa.regime_folgas === 'rotativo'
+        ? 'Escala rotativa: os turnos preenchem os 7 dias. O dia em que a pessoa não bater ponto conta como folga, não como falta.'
+        : 'Os turnos preenchem de segunda a sábado. Depois pode ajustar dia a dia — deixe vazio para marcar folga.'}
+      O turno da noite passa a meia-noite e é contado como 8 horas.
     </p>
     <form class="formulario" id="form-horario">
       <div class="grelha-horario">
@@ -338,10 +339,12 @@ async function formularioHorario(f, container, ctx) {
       const limpar = b.dataset.turno === 'limpar';
       const turno = limpar ? null : TURNOS[Number(b.dataset.turno)];
 
-      // Segunda a sábado: numa pastelaria o sábado é dia de trabalho.
-      // Domingo fica de fora — quem trabalhar ao domingo acrescenta à mão.
+      // Escala rotativa (6x2): a folga pode calhar em qualquer dia, por
+      // isso o turno cobre a semana toda e o dia sem ponto é que é folga.
+      // Horário fixo: segunda a sábado, o domingo fica de folga.
+      const semanaToda = ctx.empresa.regime_folgas === 'rotativo';
       for (let i = 0; i < 7; i += 1) {
-        const preenche = !limpar && i >= 1 && i <= 6;
+        const preenche = !limpar && (semanaToda || (i >= 1 && i <= 6));
         modal.querySelector(`[name="entrada-${i}"]`).value = preenche ? turno.entrada : '';
         modal.querySelector(`[name="saida-${i}"]`).value = preenche ? turno.saida : '';
       }

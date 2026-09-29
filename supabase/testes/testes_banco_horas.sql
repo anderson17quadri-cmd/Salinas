@@ -492,7 +492,6 @@ begin
     'permission denied'
   );
 
-  reset role;
 end;
 $$;
 
@@ -732,6 +731,173 @@ begin
 
   delete from faltas_justificacoes where funcionario_id = v_ana and data = v_dia_folga;
   update empresas set regime_folgas = 'fixo' where id = v_emp;
+end;
+$$;
+
+-- ---------------------------------------------------------------------
+\echo ''
+\echo '== Turno da noite em escala rotativa =='
+do $$
+declare
+  v_mes date := date_trunc('month', (now() at time zone 'Europe/Lisbon') - interval '1 month')::date;
+  v_fim date := (date_trunc('month', (now() at time zone 'Europe/Lisbon') - interval '1 month') + interval '1 month')::date;
+  v_emp uuid := 'aaaaaaaa-0000-0000-0000-000000000001';
+  v_noite uuid := 'ffffffff-0000-0000-0000-00000000000b';
+  v_dia date;
+  v_h record;
+begin
+  update empresas set regime_folgas = 'rotativo' where id = v_emp;
+
+  -- Escala 6x2: o horário cobre os 7 dias, a folga é o dia sem entrada.
+  delete from horarios_esperados where funcionario_id = v_noite;
+  insert into horarios_esperados (funcionario_id, dia_semana, hora_entrada, hora_saida)
+  select v_noite, d, time '18:00', time '02:00' from generate_series(0, 6) d;
+
+  -- Um único turno no mês: entra às 18:00, sai às 02:00 do dia seguinte.
+  -- O dia seguinte só tem a saída — continua a ser folga.
+  v_dia := v_mes + 3;
+  delete from registos_ponto where funcionario_id = v_noite;
+  insert into registos_ponto (funcionario_id, empresa_id, tipo, metodo, "timestamp") values
+    (v_noite, v_emp, 'entrada', 'qrcode', (v_dia + time '18:00') at time zone 'Europe/Lisbon'),
+    (v_noite, v_emp, 'saida',   'qrcode', (v_dia + 1 + time '02:00') at time zone 'Europe/Lisbon');
+
+  select * into v_h from _horas_do_periodo(v_emp, v_mes, v_fim, 'Europe/Lisbon')
+  where funcionario_id = v_noite;
+
+  perform teste_ok('o turno da noite conta 8 h trabalhadas', v_h.horas_trabalhadas = 8);
+  perform teste_ok('só o dia da entrada conta como dia de trabalho (8 h previstas)',
+    v_h.horas_esperadas = 8);
+  perform teste_ok('o dia em que só houve a saída das 02:00 continua a ser folga',
+    v_h.dias_folga = (v_fim - v_mes) - 1);
+
+  -- Passagem de mês: entra no último dia às 18:00, sai no dia 1 às 02:00.
+  delete from registos_ponto where funcionario_id = v_noite;
+  insert into registos_ponto (funcionario_id, empresa_id, tipo, metodo, "timestamp") values
+    (v_noite, v_emp, 'entrada', 'qrcode', ((v_fim - 1) + time '18:00') at time zone 'Europe/Lisbon'),
+    (v_noite, v_emp, 'saida',   'qrcode', (v_fim + time '02:00') at time zone 'Europe/Lisbon');
+
+  select * into v_h from _horas_do_periodo(v_emp, v_mes, v_fim, 'Europe/Lisbon')
+  where funcionario_id = v_noite;
+  perform teste_ok('o turno que passa para o mês seguinte conta inteiro no mês em que começou',
+    v_h.horas_trabalhadas = 8);
+
+  delete from registos_ponto where funcionario_id = v_noite;
+  update empresas set regime_folgas = 'fixo' where id = v_emp;
+end;
+$$;
+
+\echo ''
+\echo '== Turno da noite em horário fixo =='
+do $$
+declare
+  v_mes date := date_trunc('month', (now() at time zone 'Europe/Lisbon') - interval '1 month')::date;
+  v_fim date := (date_trunc('month', (now() at time zone 'Europe/Lisbon') - interval '1 month') + interval '1 month')::date;
+  v_emp uuid := 'aaaaaaaa-0000-0000-0000-000000000001';
+  v_noite uuid := 'ffffffff-0000-0000-0000-00000000000b';
+  v_dia date;
+  v_h record;
+begin
+  -- Horário fixo de dois dias seguidos; só trabalhou no primeiro. A saída
+  -- das 02:00 do segundo dia não quer dizer que ele apareceu nesse dia.
+  v_dia := v_mes + 3;
+  delete from horarios_esperados where funcionario_id = v_noite;
+  insert into horarios_esperados (funcionario_id, dia_semana, hora_entrada, hora_saida) values
+    (v_noite, extract(dow from v_dia)::int,     time '18:00', time '02:00'),
+    (v_noite, extract(dow from v_dia + 1)::int, time '18:00', time '02:00');
+
+  delete from registos_ponto where funcionario_id = v_noite;
+  insert into registos_ponto (funcionario_id, empresa_id, tipo, metodo, "timestamp") values
+    (v_noite, v_emp, 'entrada', 'qrcode', (v_dia + time '18:00') at time zone 'Europe/Lisbon'),
+    (v_noite, v_emp, 'saida',   'qrcode', (v_dia + 1 + time '02:00') at time zone 'Europe/Lisbon');
+
+  select * into v_h from _horas_do_periodo(v_emp, v_mes, v_fim, 'Europe/Lisbon')
+  where funcionario_id = v_noite;
+
+  -- Os dois dias da semana repetem-se ao longo do mês; menos o que ele trabalhou.
+  perform teste_ok('um dia com só a saída das 02:00 não esconde a falta',
+    v_h.dias_sem_registo_nem_justificacao = (
+      select count(*)::int
+      from generate_series(v_mes, v_fim - 1, interval '1 day') d
+      where extract(dow from d) in (extract(dow from v_dia), extract(dow from v_dia + 1))
+    ) - 1);
+
+  delete from registos_ponto where funcionario_id = v_noite;
+  delete from horarios_esperados where funcionario_id = v_noite;
+end;
+$$;
+
+\echo ''
+\echo '== O mês em curso não conta os dias que ainda não chegaram =='
+do $$
+declare
+  v_hoje date := (now() at time zone 'Europe/Lisbon')::date;
+  v_mes date := date_trunc('month', (now() at time zone 'Europe/Lisbon'))::date;
+  v_fim date := (date_trunc('month', (now() at time zone 'Europe/Lisbon')) + interval '1 month')::date;
+  v_emp uuid := 'aaaaaaaa-0000-0000-0000-000000000001';
+  v_ana uuid := 'ffffffff-0000-0000-0000-00000000000a';
+  v_passados int;
+  v_h record;
+begin
+  -- Ana: segunda a sexta, 8 h, sem nenhum registo neste mês.
+  delete from registos_ponto where funcionario_id = v_ana
+    and "timestamp" >= v_mes at time zone 'Europe/Lisbon';
+
+  -- Dias úteis já terminados (hoje ainda está a decorrer, não conta).
+  select count(*)::int into v_passados
+  from generate_series(v_mes, v_hoje - 1, interval '1 day') d
+  where extract(dow from d) between 1 and 5;
+
+  select * into v_h from _horas_do_periodo(v_emp, v_mes, v_fim, 'Europe/Lisbon')
+  where funcionario_id = v_ana;
+
+  perform teste_ok('as horas previstas só contam os dias que já passaram',
+    v_h.horas_esperadas = v_passados * 8);
+  perform teste_ok('as faltas só contam os dias que já passaram',
+    v_h.dias_sem_registo_nem_justificacao = v_passados);
+
+  -- Sem horário definido, a estimativa também é só dos dias decorridos.
+  select * into v_h from _horas_do_periodo(v_emp, v_mes, v_fim, 'Europe/Lisbon')
+  where funcionario_id = 'ffffffff-0000-0000-0000-00000000000b';
+  perform teste_ok('a estimativa pelas horas semanais não conta o futuro',
+    v_h.horas_esperadas = round((40 * ((v_hoje - v_mes) / 7.0))::numeric, 2));
+end;
+$$;
+
+\echo ''
+\echo '== Dashboard: turno da noite e quem ainda não começou =='
+do $$
+declare
+  v_hoje date := (now() at time zone 'Europe/Lisbon')::date;
+  v_emp uuid := 'aaaaaaaa-0000-0000-0000-000000000001';
+  v_ana uuid := 'ffffffff-0000-0000-0000-00000000000a';
+  v_noite uuid := 'ffffffff-0000-0000-0000-00000000000b';
+  v_d jsonb;
+begin
+  delete from registos_ponto where funcionario_id in (v_ana, v_noite);
+  delete from horarios_esperados where funcionario_id in (v_ana, v_noite);
+
+  -- Bruno entrou ontem às 18:00 e continua a trabalhar depois da meia-noite.
+  -- Hoje tem turno a partir das 00:00 (já passou), mas ainda está dentro.
+  insert into horarios_esperados (funcionario_id, dia_semana, hora_entrada, hora_saida)
+  values (v_noite, extract(dow from v_hoje)::int, time '00:00', time '08:00');
+  insert into registos_ponto (funcionario_id, empresa_id, tipo, metodo, "timestamp") values
+    (v_noite, v_emp, 'entrada', 'qrcode', ((v_hoje - 1) + time '18:00') at time zone 'Europe/Lisbon');
+
+  -- Ana só começa às 23:59: ainda não chegou a hora, não é ausência.
+  insert into horarios_esperados (funcionario_id, dia_semana, hora_entrada, hora_saida)
+  values (v_ana, extract(dow from v_hoje)::int, time '23:59', time '07:00');
+
+  perform teste_entrar('33333333-3333-3333-3333-333333333333');
+  v_d := admin_dashboard_hoje();
+
+  perform teste_ok('quem está no turno da noite depois da meia-noite aparece dentro',
+    (select f->>'estado' from jsonb_array_elements(v_d->'funcionarios') f
+     where f->>'id' = v_noite::text) = 'dentro');
+  perform teste_ok('ninguém conta como "sem entrada": um está a trabalhar, a outra ainda não começou',
+    (v_d->>'ausentes_com_horario')::int = 0);
+
+  delete from registos_ponto where funcionario_id in (v_ana, v_noite);
+  delete from horarios_esperados where funcionario_id in (v_ana, v_noite);
 end;
 $$;
 
