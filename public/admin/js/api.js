@@ -85,11 +85,19 @@ export async function contextoAdmin() {
   if (error) throw error;
   if (!admin) return null;
 
-  const { data: empresa, error: erroEmpresa } = await supabase()
+  const colunas = 'id, nome, morada, latitude, longitude, raio_metros, metodo_qrcode_ativo, metodo_gps_ativo, foto_obrigatoria, timezone, qr_token_atualizado_em, politica_banco_horas, limite_compensacao_meses, regime_folgas';
+  const lerEmpresa = (extra) => supabase()
     .from('empresas')
-    .select('id, nome, morada, latitude, longitude, raio_metros, metodo_qrcode_ativo, metodo_gps_ativo, foto_obrigatoria, timezone, qr_token_atualizado_em, politica_banco_horas, limite_compensacao_meses, regime_folgas, gps_so_saida')
+    .select(colunas + extra)
     .eq('id', admin.empresa_id)
     .single();
+
+  let { data: empresa, error: erroEmpresa } = await lerEmpresa(', gps_so_saida');
+  // 42703 = coluna inexistente: a base de dados ainda não recebeu o
+  // supabase/atualizar.sql. O painel continua a funcionar sem a opção.
+  if (erroEmpresa?.code === '42703') {
+    ({ data: empresa, error: erroEmpresa } = await lerEmpresa(''));
+  }
   if (erroEmpresa) throw erroEmpresa;
 
   return { admin, empresa };

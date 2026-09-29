@@ -113,6 +113,7 @@ export default async function renderDefinicoes(container, ctx) {
           Permitir registo por geolocalização
         </label>
 
+${'gps_so_saida' in e ? `
         <label style="font-weight:400">
           <input type="checkbox" name="gps_so_saida" ${e.gps_so_saida ? 'checked' : ''}
                  style="width:auto;margin-right:8px" />
@@ -123,6 +124,7 @@ export default async function renderDefinicoes(container, ctx) {
           em casa deixa de chegar para entrar ao serviço, e a saída continua a
           poder ser feita com um toque. Só tem efeito com o QR code activo.
         </p>
+        ` : ''}
 
         <label style="font-weight:400">
           <input type="checkbox" name="foto_obrigatoria" ${e.foto_obrigatoria ? 'checked' : ''}
@@ -189,7 +191,7 @@ export default async function renderDefinicoes(container, ctx) {
       metodo_qrcode_ativo: qr,
       metodo_gps_ativo: gps,
       foto_obrigatoria: form.foto_obrigatoria.checked,
-      gps_so_saida: form.gps_so_saida.checked,
+      ...(form.gps_so_saida ? { gps_so_saida: form.gps_so_saida.checked } : {}),
     };
 
     const botao = container.querySelector('#guardar');
