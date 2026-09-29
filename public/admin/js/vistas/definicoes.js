@@ -114,6 +114,17 @@ export default async function renderDefinicoes(container, ctx) {
         </label>
 
         <label style="font-weight:400">
+          <input type="checkbox" name="gps_so_saida" ${e.gps_so_saida ? 'checked' : ''}
+                 style="width:auto;margin-right:8px" />
+          GPS só para a saída e as pausas — a entrada faz-se com o QR code da loja
+        </label>
+        <p class="nota" style="margin-top:-6px">
+          Recomendado para quem mora perto da pastelaria: estar «dentro do raio»
+          em casa deixa de chegar para entrar ao serviço, e a saída continua a
+          poder ser feita com um toque. Só tem efeito com o QR code activo.
+        </p>
+
+        <label style="font-weight:400">
           <input type="checkbox" name="foto_obrigatoria" ${e.foto_obrigatoria ? 'checked' : ''}
                  style="width:auto;margin-right:8px" />
           Exigir foto de confirmação no registo por GPS
@@ -178,6 +189,7 @@ export default async function renderDefinicoes(container, ctx) {
       metodo_qrcode_ativo: qr,
       metodo_gps_ativo: gps,
       foto_obrigatoria: form.foto_obrigatoria.checked,
+      gps_so_saida: form.gps_so_saida.checked,
     };
 
     const botao = container.querySelector('#guardar');

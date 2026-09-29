@@ -189,14 +189,17 @@ export async function listarJustificacoes(funcionarioId) {
   return data ?? [];
 }
 
-export async function criarJustificacao({ funcionarioId, data: dataFalta, motivo, anexoUrl }) {
-  const { error } = await supabase().from('faltas_justificacoes').insert({
-    funcionario_id: funcionarioId,
-    data: dataFalta,
-    motivo,
-    anexo_url: anexoUrl ?? null,
-    status: 'pendente',
-  });
+/** Um pedido por dia: o gestor aprova ou recusa cada dia à parte. */
+export async function criarJustificacoes({ funcionarioId, datas, motivo, anexoUrl }) {
+  const { error } = await supabase().from('faltas_justificacoes').insert(
+    datas.map((data) => ({
+      funcionario_id: funcionarioId,
+      data,
+      motivo,
+      anexo_url: anexoUrl ?? null,
+      status: 'pendente',
+    }))
+  );
   if (error) throw error;
 }
 

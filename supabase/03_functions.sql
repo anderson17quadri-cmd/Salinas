@@ -279,6 +279,13 @@ begin
       using errcode = 'P0001';
   end if;
 
+  -- Com o QR code activo, a entrada tem de ser feita na loja. Só com GPS,
+  -- quem mora dentro do raio podia entrar ao serviço sem sair de casa.
+  if p_tipo = 'entrada' and e.gps_so_saida and e.metodo_qrcode_ativo then
+    raise exception 'A entrada faz-se com o QR code da loja. O GPS serve para a saída e as pausas.'
+      using errcode = 'P0001';
+  end if;
+
   if e.foto_obrigatoria and (p_foto_url is null or p_foto_url = '') then
     raise exception 'Esta empresa exige uma foto de confirmação no registo.'
       using errcode = 'P0001';
@@ -336,6 +343,7 @@ begin
       'latitude', e.latitude, 'longitude', e.longitude,
       'metodo_qrcode_ativo', e.metodo_qrcode_ativo,
       'metodo_gps_ativo', e.metodo_gps_ativo,
+      'gps_so_saida', e.gps_so_saida,
       'foto_obrigatoria', e.foto_obrigatoria
     ),
     'estado', v_estado,

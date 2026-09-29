@@ -15,6 +15,7 @@ export const ROTULOS_TIPO = {
 export const ROTULOS_METODO = {
   qrcode: 'QR code',
   geolocalizacao: 'Geolocalização',
+  manual: 'Corrigido pelo gestor',
 };
 
 export const ROTULOS_ESTADO = {
@@ -87,6 +88,35 @@ export function intervaloDoDia(dataIso) {
   const inicio = new Date(`${dataIso}T00:00:00`);
   const fim = new Date(`${dataIso}T23:59:59.999`);
   return { de: inicio.toISOString(), ate: fim.toISOString() };
+}
+
+/**
+ * "2026-09-28" + "17:00" na hora do fuso `tz` → instante ISO em UTC.
+ * Sem isto, o servidor lia a hora como UTC e no Verão ficava uma hora
+ * desviada.
+ */
+export function instanteNoFuso(data, hora, tz = TIMEZONE_PADRAO) {
+  const palpite = new Date(`${data}T${hora}:00Z`);
+  const partes = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: tz, hourCycle: 'h23',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+    }).formatToParts(palpite).map((p) => [p.type, p.value])
+  );
+  const comoSeFosseUtc = Date.UTC(
+    Number(partes.year), Number(partes.month) - 1, Number(partes.day),
+    Number(partes.hour), Number(partes.minute), Number(partes.second)
+  );
+  const desvio = comoSeFosseUtc - palpite.getTime();
+  return new Date(palpite.getTime() - desvio).toISOString();
+}
+
+/** Dia seguinte a uma data "AAAA-MM-DD". */
+export function diaSeguinte(data) {
+  const d = new Date(`${data}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
 }
 
 export function hojeIso() {

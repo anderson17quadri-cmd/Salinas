@@ -35,6 +35,10 @@ create table if not exists empresas (
   -- Como se sabe que um dia foi folga (ver _horas_do_periodo em 03_functions.sql)
   regime_folgas text not null default 'fixo'
     check (regime_folgas in ('fixo','rotativo')),
+  -- A entrada exige o QR code (prova que a pessoa está na loja); o GPS
+  -- fica para a saída e as pausas. Resolve quem mora perto do trabalho:
+  -- estar "dentro do raio" em casa deixa de chegar para entrar ao serviço.
+  gps_so_saida boolean not null default false,
   created_at timestamptz default now()
 );
 
@@ -43,6 +47,8 @@ create table if not exists empresas (
 -- not exists` acima não acrescenta colunas novas a uma tabela existente.
 alter table empresas
   add column if not exists regime_folgas text not null default 'fixo';
+alter table empresas
+  add column if not exists gps_so_saida boolean not null default false;
 do $$
 begin
   alter table empresas add constraint empresas_regime_folgas_check
@@ -106,7 +112,7 @@ create table if not exists registos_ponto (
   funcionario_id uuid references funcionarios(id) on delete cascade,
   empresa_id uuid references empresas(id) on delete cascade,
   tipo text check (tipo in ('entrada','saida','inicio_pausa','fim_pausa')) not null,
-  metodo text check (metodo in ('qrcode','geolocalizacao')) not null,
+  metodo text check (metodo in ('qrcode','geolocalizacao','manual')) not null,
   timestamp timestamptz default now(),
   latitude double precision,
   longitude double precision,

@@ -87,7 +87,7 @@ export async function contextoAdmin() {
 
   const { data: empresa, error: erroEmpresa } = await supabase()
     .from('empresas')
-    .select('id, nome, morada, latitude, longitude, raio_metros, metodo_qrcode_ativo, metodo_gps_ativo, foto_obrigatoria, timezone, qr_token_atualizado_em, politica_banco_horas, limite_compensacao_meses, regime_folgas')
+    .select('id, nome, morada, latitude, longitude, raio_metros, metodo_qrcode_ativo, metodo_gps_ativo, foto_obrigatoria, timezone, qr_token_atualizado_em, politica_banco_horas, limite_compensacao_meses, regime_folgas, gps_so_saida')
     .eq('id', admin.empresa_id)
     .single();
   if (erroEmpresa) throw erroEmpresa;
@@ -225,7 +225,8 @@ export async function listarRegistos({ de, ate, funcionarioId, tipo, limite = 10
     .limit(limite);
 
   if (de) query = query.gte('timestamp', de);
-  if (ate) query = query.lte('timestamp', ate);
+  // `ate` é exclusivo: o primeiro instante do dia seguinte.
+  if (ate) query = query.lt('timestamp', ate);
   if (funcionarioId) query = query.eq('funcionario_id', funcionarioId);
   if (tipo) query = query.eq('tipo', tipo);
 
@@ -256,6 +257,17 @@ export async function listarJustificacoes(estado) {
   if (error) throw error;
   return data ?? [];
 }
+
+export const adicionarRegisto = ({ funcionarioId, tipo, timestamp, motivo }) =>
+  rpc('admin_adicionar_registo', {
+    p_funcionario_id: funcionarioId,
+    p_tipo: tipo,
+    p_timestamp: timestamp,
+    p_motivo: motivo,
+  });
+
+export const apagarRegisto = (id, motivo) =>
+  rpc('admin_apagar_registo', { p_registo_id: id, p_motivo: motivo });
 
 export const reverJustificacao = (id, estado) =>
   rpc('admin_rever_justificacao', { p_justificacao_id: id, p_status: estado });

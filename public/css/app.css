@@ -532,3 +532,9 @@ h2.subtitulo { font-size: 17px; margin: 0 0 12px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* Dois campos de data lado a lado (justificação de vários dias). */
+.linha-datas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* Sem isto, o campo de data tem uma largura mínima e sai do cartão. */
+.linha-datas > label { min-width: 0; }
+.linha-datas input { min-width: 0; width: 100%; }

@@ -105,7 +105,13 @@ supabase/03_functions.sql
 supabase/04_storage.sql
 supabase/05_seed.sql        (opcional — dados de exemplo)
 supabase/06_banco_horas.sql
+supabase/07_correcoes.sql
 ```
+
+**Actualizar um projecto já instalado:** cole `supabase/atualizar.sql` no
+SQL Editor e carregue em **Run**. Junta tudo o que mudou, corre numa só
+transacção e pode ser repetido — não apaga dados. É gerado por
+`tools/gerar-atualizacao.sh`; os testes falham se ficar desactualizado.
 
 > `00_stubs_teste.sql` é só para correr o schema num Postgres normal. **Não o
 > execute no Supabase**: recria objectos que o Supabase já fornece.
@@ -153,6 +159,10 @@ No painel, em **Definições**, defina:
   actual" preenche-as se estiver lá) e o **raio** permitido em metros.
 - Que **métodos** estão activos — QR code, geolocalização, ou ambos.
 - Se a **foto** de confirmação é obrigatória no registo por GPS.
+- Se o **GPS serve só para a saída e as pausas**. Com esta opção (e o QR
+  activo), a entrada tem de ser feita com o QR code da loja. Resolve quem
+  mora perto: estar «dentro do raio» em casa deixa de chegar para entrar ao
+  serviço, e a saída continua a fazer-se com um toque, em qualquer lado.
 
 ### 4. Publicar (GitHub Pages)
 
@@ -239,6 +249,26 @@ imediato: *"Entrada registada às 09:03"*.
 
 Fora do raio, o registo **é gravado na mesma**, marcado como fora do raio e com
 a distância — o gestor revê-o depois em **Registos**.
+
+### Corrigir registos
+
+Quem se esquece de bater a saída não consegue entrar no dia seguinte (a app
+vê um turno ainda aberto e avisa a pessoa para falar com o gestor). Em
+**Registos**, o gestor:
+
+- **Acrescenta** o registo em falta, com dia, hora e motivo;
+- **Apaga** um registo errado, com motivo.
+
+O servidor recusa qualquer correcção que deixe a sequência errada (duas
+entradas seguidas, por exemplo). Os registos acrescentados ficam marcados
+«Corrigido pelo gestor», e cada correcção — incluindo uma cópia do que foi
+apagado — fica em `correcoes_registos`, que só o gestor da empresa pode ler.
+
+### Faltas e férias
+
+Na app, em **Faltas**, o funcionário pede um dia ou um intervalo («Até»),
+também com antecedência. Fica um pedido por dia, para o gestor poder aprovar
+ou recusar cada um.
 
 ---
 

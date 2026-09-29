@@ -15,6 +15,7 @@ export const ROTULOS_TIPO = {
 export const ROTULOS_METODO = {
   qrcode: 'QR code',
   geolocalizacao: 'Geolocalização',
+  manual: 'Corrigido pelo gestor',
 };
 
 export const ROTULOS_ESTADO = {

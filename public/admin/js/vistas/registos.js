@@ -1,12 +1,23 @@
-import { listarFuncionarios, listarRegistos, mensagemDeErro, urlAssinado } from '../api.js';
+import {
+  adicionarRegisto,
+  apagarRegisto,
+  listarFuncionarios,
+  listarRegistos,
+  mensagemDeErro,
+  urlAssinado,
+} from '../api.js';
 import {
   ROTULOS_METODO,
   ROTULOS_TIPO,
+  abrirModal,
   dataHora,
   descarregarCsv,
+  diaSeguinte,
   esc,
   exportarPdf,
+  fecharModal,
   hojeIso,
+  instanteNoFuso,
   notificar,
 } from '../ui.js';
 
@@ -29,6 +40,7 @@ export default async function renderRegistos(container, ctx) {
         <p>Horas apresentadas no fuso ${esc(ctx.timezone)}.</p>
       </div>
       <div class="accoes">
+        <button type="button" class="botao botao-primario" id="acrescentar">Acrescentar registo</button>
         <button type="button" class="botao botao-secundario" id="exportar-csv">Exportar CSV</button>
         <button type="button" class="botao botao-secundario" id="exportar-pdf">Exportar PDF</button>
       </div>
@@ -65,14 +77,15 @@ export default async function renderRegistos(container, ctx) {
     resultado.innerHTML = '<div class="carregando">A carregar…</div>';
     try {
       const registos = await listarRegistos({
-        de: `${filtros.de}T00:00:00`,
-        ate: `${filtros.ate}T23:59:59.999`,
+        de: instanteNoFuso(filtros.de, '00:00', ctx.timezone),
+        ate: instanteNoFuso(diaSeguinte(filtros.ate), '00:00', ctx.timezone),
         funcionarioId: filtros.funcionarioId || null,
         tipo: filtros.tipo || null,
       });
 
       resultado.innerHTML = tabela(registos, porId, ctx.timezone);
       ligarAnexos(resultado);
+      ligarApagar(resultado, registos, porId, ctx, carregar);
       resultado._registos = registos;
     } catch (e) {
       resultado.innerHTML = `<div class="alerta alerta-erro">${esc(mensagemDeErro(e))}</div>`;
@@ -117,6 +130,10 @@ export default async function renderRegistos(container, ctx) {
 
   container.querySelector('#exportar-pdf').addEventListener('click', exportarPdf);
 
+  container.querySelector('#acrescentar').addEventListener('click', () =>
+    formularioAcrescentar(funcionarios, ctx, carregar)
+  );
+
   await carregar();
 }
 
@@ -137,6 +154,7 @@ function tabela(registos, porId, tz) {
             <th>Método</th>
             <th>Localização</th>
             <th>Observação</th>
+            <th class="nao-imprimir"></th>
           </tr>
         </thead>
         <tbody>
@@ -153,6 +171,9 @@ function tabela(registos, porId, tz) {
                 </td>
                 <td>${localizacao(r)}</td>
                 <td>${esc(r.observacao ?? '') || '—'}</td>
+                <td class="accoes nao-imprimir">
+                  <button type="button" class="ligacao" data-apagar="${esc(r.id)}">Apagar</button>
+                </td>
               </tr>
             `;
           }).join('')}
@@ -181,6 +202,120 @@ function ligarAnexos(raiz) {
       } catch (e) {
         notificar(mensagemDeErro(e, 'Não foi possível abrir a foto.'), 'erro');
       }
+    })
+  );
+}
+
+// ---------------------------------------------------------------------
+// Correcções
+// ---------------------------------------------------------------------
+// Caso típico: alguém esqueceu-se de bater a saída e hoje a app não o
+// deixa entrar. Acrescenta-se a saída em falta à hora certa. O servidor
+// recusa qualquer correcção que deixe a sequência errada.
+function formularioAcrescentar(funcionarios, ctx, aoGravar) {
+  const activos = funcionarios.filter((f) => f.ativo);
+  const modal = abrirModal(`
+    <h2>Acrescentar registo</h2>
+    <p class="nota">Por exemplo, a saída que alguém se esqueceu de bater.
+      Fica marcado como «${esc(ROTULOS_METODO.manual)}», com o motivo.</p>
+    <form class="formulario" id="form-acrescentar">
+      <label>Funcionário
+        <select name="funcionario" required>
+          <option value="">Escolher…</option>
+          ${activos.map((f) => `<option value="${esc(f.id)}">${esc(f.nome)}</option>`).join('')}
+        </select>
+      </label>
+      <label>Tipo
+        <select name="tipo" required>
+          ${Object.entries(ROTULOS_TIPO).map(([v, r]) =>
+            `<option value="${v}" ${v === 'saida' ? 'selected' : ''}>${esc(r)}</option>`
+          ).join('')}
+        </select>
+      </label>
+      <div class="filtros" style="padding:0;border:none;background:none;margin:0">
+        <label>Dia <input type="date" name="data" value="${hojeIso()}" max="${hojeIso()}" required /></label>
+        <label>Hora <input type="time" name="hora" required /></label>
+      </div>
+      <label>Motivo
+        <input type="text" name="motivo" maxlength="200" required
+               placeholder="Ex.: esqueceu-se de bater a saída" />
+      </label>
+      <div class="alerta alerta-erro oculto" id="erro-acrescentar"></div>
+      <div class="modal-accoes">
+        <button type="button" class="botao botao-secundario" data-fechar>Cancelar</button>
+        <button type="submit" class="botao botao-primario">Gravar</button>
+      </div>
+    </form>
+  `);
+
+  const form = modal.querySelector('#form-acrescentar');
+  const erro = modal.querySelector('#erro-acrescentar');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    erro.classList.add('oculto');
+    const botao = form.querySelector('[type="submit"]');
+    botao.disabled = true;
+    try {
+      await adicionarRegisto({
+        funcionarioId: form.funcionario.value,
+        tipo: form.tipo.value,
+        timestamp: instanteNoFuso(form.data.value, form.hora.value, ctx.timezone),
+        motivo: form.motivo.value.trim(),
+      });
+      fecharModal();
+      notificar('Registo acrescentado.', 'sucesso');
+      aoGravar();
+    } catch (e2) {
+      erro.textContent = mensagemDeErro(e2);
+      erro.classList.remove('oculto');
+    } finally {
+      botao.disabled = false;
+    }
+  });
+}
+
+function ligarApagar(raiz, registos, porId, ctx, aoApagar) {
+  const porRegisto = Object.fromEntries(registos.map((r) => [r.id, r]));
+
+  raiz.querySelectorAll('[data-apagar]').forEach((b) =>
+    b.addEventListener('click', () => {
+      const r = porRegisto[b.dataset.apagar];
+      const modal = abrirModal(`
+        <h2>Apagar registo</h2>
+        <p><strong>${esc(porId[r.funcionario_id]?.nome ?? '—')}</strong> ·
+          ${esc(ROTULOS_TIPO[r.tipo] ?? r.tipo)} ·
+          ${esc(dataHora(r.timestamp, ctx.timezone))}</p>
+        <p class="nota">O registo sai das contas, mas fica guardado no histórico
+          de correcções, com o motivo.</p>
+        <form class="formulario" id="form-apagar">
+          <label>Motivo
+            <input type="text" name="motivo" maxlength="200" required
+                   placeholder="Ex.: entrada batida por engano" />
+          </label>
+          <div class="alerta alerta-erro oculto" id="erro-apagar"></div>
+          <div class="modal-accoes">
+            <button type="button" class="botao botao-secundario" data-fechar>Cancelar</button>
+            <button type="submit" class="botao botao-perigo">Apagar</button>
+          </div>
+        </form>
+      `);
+
+      const form = modal.querySelector('#form-apagar');
+      const erro = modal.querySelector('#erro-apagar');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        erro.classList.add('oculto');
+        try {
+          await apagarRegisto(r.id, form.motivo.value.trim());
+          fecharModal();
+          notificar('Registo apagado.', 'sucesso');
+          aoApagar();
+        } catch (e2) {
+          erro.textContent = mensagemDeErro(e2);
+          erro.classList.remove('oculto');
+        }
+      });
     })
   );
 }

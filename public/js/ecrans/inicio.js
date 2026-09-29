@@ -23,6 +23,19 @@ export default async function renderInicio(container, ctx) {
   const proximos = estado.proximos_tipos ?? ['entrada'];
   const tz = empresa.timezone;
 
+  // Com esta opção, a entrada prova-se no balcão (QR code); o GPS fica
+  // para a saída e as pausas.
+  const gpsPermitido = (tipo) =>
+    empresa.metodo_gps_ativo
+    && !(tipo === 'entrada' && empresa.gps_so_saida && empresa.metodo_qrcode_ativo);
+  const mostrarChipGps = proximos.some(gpsPermitido);
+
+  // Um turno aberto há mais de 16 h é quase sempre uma saída esquecida.
+  const ultimo = estado.ultimo_registo;
+  const saidaEsquecida = ultimo
+    && ['entrada', 'fim_pausa', 'inicio_pausa'].includes(ultimo.tipo)
+    && Date.now() - new Date(ultimo.timestamp).getTime() > 16 * 3600 * 1000;
+
   container.innerHTML = `
     <div class="cabecalho-app">
       <div>
@@ -46,6 +59,13 @@ export default async function renderInicio(container, ctx) {
       </p>
     </div>
 
+    ${saidaEsquecida ? `
+      <div class="alerta alerta-aviso" style="margin-bottom:16px">
+        O seu turno está aberto desde ${esc(dataExtenso(ultimo.timestamp, tz).toLowerCase())}
+        às ${esc(horas(ultimo.timestamp, tz))}. Se se esqueceu de bater a saída,
+        peça ao gestor para a acrescentar — depois já pode entrar normalmente.
+      </div>` : ''}
+
     <button type="button" class="botao-ponto" id="bater-ponto">
       <span class="rotulo">Bater Ponto</span>
       <span class="sub">${proximos.map((t) => esc(ROTULOS_TIPO[t])).join('  ·  ')}</span>
@@ -53,7 +73,7 @@ export default async function renderInicio(container, ctx) {
 
     <div class="chips" style="margin-top:14px">
       ${empresa.metodo_qrcode_ativo ? '<button type="button" class="chip" data-metodo="qrcode">Ler QR code</button>' : ''}
-      ${empresa.metodo_gps_ativo ? '<button type="button" class="chip" data-metodo="gps">Usar GPS</button>' : ''}
+      ${mostrarChipGps ? '<button type="button" class="chip" data-metodo="gps">Usar GPS</button>' : ''}
     </div>
 
     <div class="cartao" style="margin-top:16px">
@@ -108,10 +128,14 @@ export default async function renderInicio(container, ctx) {
 
   function escolherMetodo(tipo, metodoForcado) {
     if (metodoForcado === 'qrcode') return registarQr(tipo);
-    if (metodoForcado === 'gps') return registarGps(tipo);
-
     const qr = empresa.metodo_qrcode_ativo;
-    const gps = empresa.metodo_gps_ativo;
+    const gps = gpsPermitido(tipo);
+
+    if (metodoForcado === 'gps') {
+      if (gps) return registarGps(tipo);
+      notificar('A entrada faz-se com o QR code da loja. O GPS serve para a saída e as pausas.', 'info');
+      return registarQr(tipo);
+    }
 
     if (qr && gps) {
       const modal = abrirModal(`

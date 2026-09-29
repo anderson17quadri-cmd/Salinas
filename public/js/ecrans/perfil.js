@@ -1,6 +1,7 @@
 import {
   actualizarPerfil,
   carregarFicheiro,
+  definirPalavraPasse,
   estadoAtual,
   mensagemDeErro,
   obterHorario,
@@ -71,8 +72,55 @@ export default async function renderPerfil(container, ctx) {
         : '<p class="nota">Ainda não tem horário definido pelo seu gestor.</p>'}
     </div>
 
+    <form class="cartao" id="form-palavra-passe" style="margin-bottom:16px">
+      <h2 class="subtitulo">Mudar palavra-passe</h2>
+      <p class="nota">Se entrou com a palavra-passe que o gestor lhe deu, troque-a aqui por uma sua.</p>
+      <div class="formulario">
+        <label>Nova palavra-passe
+          <input type="password" name="nova" autocomplete="new-password" minlength="8" required />
+        </label>
+        <label>Repetir
+          <input type="password" name="repetir" autocomplete="new-password" minlength="8" required />
+        </label>
+      </div>
+      <div class="alerta alerta-erro oculto" id="erro-pw" style="margin-top:14px"></div>
+      <button type="submit" class="botao botao-secundario" style="margin-top:16px">Mudar palavra-passe</button>
+    </form>
+
     <button type="button" class="botao botao-secundario" id="terminar-sessao">Terminar sessão</button>
   `;
+
+  const formPw = container.querySelector('#form-palavra-passe');
+  formPw.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const erroPw = formPw.querySelector('#erro-pw');
+    erroPw.classList.add('oculto');
+    const nova = formPw.nova.value;
+
+    if (nova.length < 8) {
+      erroPw.textContent = 'A palavra-passe tem de ter pelo menos 8 caracteres.';
+      erroPw.classList.remove('oculto');
+      return;
+    }
+    if (nova !== formPw.repetir.value) {
+      erroPw.textContent = 'As duas palavras-passe não são iguais.';
+      erroPw.classList.remove('oculto');
+      return;
+    }
+
+    const botao = formPw.querySelector('[type="submit"]');
+    botao.disabled = true;
+    try {
+      await definirPalavraPasse(nova);
+      formPw.reset();
+      notificar('Palavra-passe mudada.', 'sucesso');
+    } catch (e2) {
+      erroPw.textContent = mensagemDeErro(e2);
+      erroPw.classList.remove('oculto');
+    } finally {
+      botao.disabled = false;
+    }
+  });
 
   const form = container.querySelector('#form-perfil');
   const erro = container.querySelector('#erro');
